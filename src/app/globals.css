@@ -1,26 +1,93 @@
 @import "tailwindcss";
 
+/* ===========================================================================
+   BrandFluence AI — Design system
+   Derivado de la referencia visual: dark mode casi negro, tarjetas elevadas,
+   esquinas muy redondeadas, coral como acento primario.
+
+   DOS paletas a propósito:
+   · --color-accent-*  → UI (botones, tarjetas, chips). Colores exactos de la
+                         referencia. Mandan la estética.
+   · --color-data-*    → marcas de datos (anillos, barras, series). Versiones
+                         más oscuras que SÍ pasan la banda de luminosidad
+                         OKLCH 0.48–0.67 y la separación para daltonismo
+                         sobre fondo oscuro. Los de UI no la pasan.
+   No las mezcles: un anillo de score usa data-*, un botón usa accent-*.
+   =========================================================================== */
+
+@theme {
+  /* --- Superficies ------------------------------------------------------ */
+  --color-canvas: #0b0b0c; /* fondo de página */
+  --color-surface: #151517; /* tarjeta */
+  --color-surface-2: #1e1e21; /* tarjeta anidada / input */
+  --color-surface-3: #2a2a2e; /* hover, chip inactivo */
+  --color-line: #26262a; /* borde de tarjeta */
+  --color-line-strong: #3a3a40; /* borde de control */
+
+  /* --- Tinta ------------------------------------------------------------ */
+  --color-ink: #ffffff;
+  --color-ink-secondary: #9a9aa0;
+  --color-ink-muted: #6b6b72;
+
+  /* --- Acentos de UI (referencia, tal cual) ----------------------------- */
+  --color-accent: #ff3b4f; /* coral: acción primaria, "hoy", activo */
+  --color-accent-hover: #ff5566;
+  --color-accent-ink: #ffffff; /* texto sobre coral */
+  --color-mint: #62d9c8;
+  --color-purple: #a97bf0;
+  --color-sun: #ffd54a;
+
+  /* --- Paleta de datos (validada, orden fijo — nunca cíclico) ----------- */
+  --color-data-1: #ff3b4f;
+  --color-data-2: #2fa898;
+  --color-data-3: #9463e0;
+  --color-data-4: #be8a15;
+
+  /* --- Estado (reservados, nunca como "serie 5") ------------------------ */
+  --color-good: #2fa898;
+  --color-warning: #be8a15;
+  --color-critical: #ff3b4f;
+
+  /* --- Radios ----------------------------------------------------------- */
+  --radius-chip: 0.75rem; /* 12px */
+  --radius-tile: 1.25rem; /* 20px */
+  --radius-card: 1.5rem; /* 24px */
+  --radius-pill: 999px;
+
+  /* --- Tipografía ------------------------------------------------------- */
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Dark-only por diseño: la referencia es un producto dark. No hay light mode,
+   así que fijamos color-scheme para que los controles nativos (scrollbars,
+   date pickers) no salgan en blanco. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Cifras grandes alineadas en columnas (stat tiles, tablas de score) */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

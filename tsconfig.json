@@ -9,6 +9,10 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
+    // Permite escribir "./taxonomy.ts" en los imports. Lo necesita el
+    // resolvedor ESM de Node para poder ejecutar los tests con `node --test`
+    // sin añadir un runner externo. Seguro porque noEmit está activo.
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",

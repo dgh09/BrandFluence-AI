@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# .env.example SÍ se sube: es la plantilla, solo tiene nombres de variables
+# y valores vacíos. Los secretos reales viven en .env.local, que sigue fuera.
+!.env.example
 
 # vercel
 .vercel
