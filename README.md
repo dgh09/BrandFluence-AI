@@ -40,7 +40,8 @@ Lo que ya funciona, verificado de extremo a extremo contra una base de datos rea
 | ✅ | Aplicar y descartar candidaturas |
 | ✅ | Panel diferenciado para creador y para marca |
 | ✅ | **Aceptar candidato → crear colaboración** |
-| 🚧 | Ciclo de vida de la colaboración (entregables, cerrar) |
+| ✅ | **Entregables y cierre de la colaboración** |
+| 🚧 | Métricas de rendimiento al cerrar |
 | 🚧 | Subida de imágenes y vídeo |
 | 📋 | Pagos con Stripe, notificaciones por email |
 | 📋 | Apps nativas iOS y Android (Expo) |
@@ -151,6 +152,47 @@ Tres detalles que no son accidentales:
 
 **No se puede aceptar a quien no ha aplicado.** Un match en `suggested` no entra en el `IN (...)`: la marca no puede empujar a un creador a una colaboración que él no ha pedido.
 
+### La colaboración, una vez abierta
+
+Nace `active` y muere en uno de dos estados terminales. Quién puede llevarla a cuál **no se decide con un `if`**: va en el `WHERE`, que es donde vive la relación real entre una persona y una colaboración.
+
+| Acción | Marca | Creador |
+|---|:--:|:--:|
+| Definir los entregables | ✅ | — |
+| Marcar un entregable como hecho | — | ✅ |
+| Dar por **completada** | ✅ | — |
+| **Cancelar** | ✅ | ✅ |
+
+Completar es aceptar el trabajo recibido, y eso le toca a quien lo encargó. Cancelar lo pueden hacer los dos, porque cualquiera de las dos partes puede echarse atrás.
+
+```sql
+AND co.status = 'active'
+AND (b.user_id = $1                              -- la marca, ambas cosas
+     OR (cr.user_id = $1 AND $3::text = 'cancelled'))  -- el creador, solo cancelar
+```
+
+Ese `co.status = 'active'` es lo que hace terminales a los dos estados: una colaboración cancelada no se puede resucitar como completada.
+
+### Los entregables viven en un JSONB, y eso obliga a tener cuidado
+
+Son una lista dentro de una columna, no una tabla. Es lo correcto para un MVP —nunca se consultan por separado—, pero **dos personas distintas escriben en esa misma celda**: la marca edita los títulos, el creador marca lo entregado.
+
+Si la marca leyera el JSONB, lo mezclara en TypeScript y lo escribiera de vuelta, un creador que marcase un entregable en ese hueco perdería su cambio. Por eso el merge ocurre **dentro del `UPDATE`**: al leer `co.deliverables` en la propia sentencia, Postgres bloquea la fila y, si otra transacción se le adelantó, reevalúa contra la versión nueva.
+
+```sql
+UPDATE collaborations co
+   SET deliverables = (
+     SELECT jsonb_agg(jsonb_build_object(
+              'id',    incoming->>'id',
+              'title', incoming->>'title',
+              'done',  coalesce(previous.done, false),   -- ← se conserva
+              ...
+```
+
+Y marcar un entregable reescribe solo ese elemento, no la lista entera, para que dos marcados seguidos no se pisen.
+
+**Los ids los genera el servidor.** Si vinieran del cliente, una marca podría mandar el id de otra fila y arrastrar su estado de "entregado" a un entregable distinto. Un id que no estaba ya en esta colaboración simplemente no encuentra pareja en el `LEFT JOIN`, y el entregable nace pendiente.
+
 ---
 
 ## Stack
@@ -223,7 +265,7 @@ El script imprime las credenciales de acceso al terminar.
 ### Tests
 
 ```
-✓ 35 consultas revisadas, todas cuadran
+✓ 40 consultas revisadas, todas cuadran
 # tests 19
 # pass 19
 # fail 0
@@ -262,6 +304,7 @@ database/
 
 - **Los endpoints de "lo mío" no llevan id en la URL.** Es `/api/profile`, no `/api/creators/[id]`. La identidad sale de la sesión, así que no existe la posibilidad de editar el perfil de otra persona cambiando un identificador.
 - **La autorización vive dentro del SQL.** Las acciones sobre un match filtran por `user_id` en el propio `WHERE`: un match ajeno afecta a cero filas. No hay una comprobación previa que se pueda olvidar.
+- **Un recurso con dos dueños se resuelve igual.** Una colaboración es del creador *y* de la marca, y cada uno puede hacer cosas distintas. En vez de repartir esa regla entre la ruta y la consulta —dos sitios que un día dejan de coincidir—, está entera en el `WHERE`. Consultar una colaboración ajena devuelve cero filas y la página responde el mismo 404 que si no existiera: no se puede averiguar qué hay probando identificadores.
 - **La unicidad se resuelve capturando la violación de constraint**, no con un `SELECT` previo, que dejaría una ventana de carrera entre la lectura y la escritura.
 - Las contraseñas se guardan con bcrypt (coste 12). Los logins fallidos comparan contra un hash señuelo para que el tiempo de respuesta no revele si el email existe.
 
@@ -283,7 +326,8 @@ Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native n
 - [x] Campañas y candidaturas
 - [x] Algoritmo de matching con puntuación explicada
 - [x] Aceptar candidato y abrir la colaboración
-- [ ] Gestionar la colaboración: entregables, métricas y cierre
+- [x] Gestionar la colaboración: entregables y cierre
+- [ ] Métricas de rendimiento de la colaboración
 - [ ] Subida de imágenes y vídeo (Supabase Storage)
 - [ ] Negociar el importe por candidato — hoy se hereda de la campaña
 - [ ] Que la marca pueda rechazar a un candidato — hoy solo puede aceptarlo

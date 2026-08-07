@@ -58,8 +58,36 @@ export const campaignSchema = z.object({
   budget: z.number().min(0),
 });
 
+/**
+ * Entregables de una colaboración. La marca manda la lista entera, no un
+ * diff: es lo que un editor de filas produce de forma natural, y evita tener
+ * que inventar operaciones de "mover" o "renombrar".
+ *
+ * El `id` viaja de vuelta en las filas que ya existían. Es lo que permite
+ * conservar su estado de entregado cuando la marca reordena o edita títulos.
+ */
+export const deliverablesSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        id: z.uuid().optional(),
+        title: z.string().trim().min(2, "Título demasiado corto").max(200),
+      }),
+    )
+    .max(20, "Máximo 20 entregables"),
+});
+
+export const deliverableDoneSchema = z.object({ done: z.boolean() });
+
+/** Los dos estados terminales. A 'active' se llega solo aceptando el match. */
+export const collaborationStatusSchema = z.object({
+  status: z.enum(["completed", "cancelled"]),
+});
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreatorProfileInput = z.infer<typeof creatorProfileSchema>;
 export type BrandProfileInput = z.infer<typeof brandProfileSchema>;
 export type CampaignInput = z.infer<typeof campaignSchema>;
+export type DeliverablesInput = z.infer<typeof deliverablesSchema>;
+export type CollaborationStatusInput = z.infer<typeof collaborationStatusSchema>;
