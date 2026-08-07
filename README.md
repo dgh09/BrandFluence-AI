@@ -39,7 +39,8 @@ Lo que ya funciona, verificado de extremo a extremo contra una base de datos rea
 | ✅ | **Algoritmo de matching** con puntuación explicada |
 | ✅ | Aplicar y descartar candidaturas |
 | ✅ | Panel diferenciado para creador y para marca |
-| 🚧 | Aceptar candidato → crear colaboración |
+| ✅ | **Aceptar candidato → crear colaboración** |
+| 🚧 | Ciclo de vida de la colaboración (entregables, cerrar) |
 | 🚧 | Subida de imágenes y vídeo |
 | 📋 | Pagos con Stripe, notificaciones por email |
 | 📋 | Apps nativas iOS y Android (Expo) |
@@ -116,6 +117,42 @@ ON CONFLICT (creator_id, campaign_id) DO UPDATE
 
 ---
 
+## Del match a la colaboración
+
+Un match recorre cuatro estados, y cada transición la provoca una persona distinta:
+
+```
+sugerido ──creador aplica──> interesado ──marca acepta──> aceptado
+    │                                                        │
+    └──creador descarta──> descartado                        └──> colaboración
+```
+
+Aceptar hace dos cosas —mover el match a `accepted` y crear la colaboración— y **las dos ocurren en una sola sentencia SQL**. Si fueran dos, un fallo entre medias dejaría un match aceptado sin colaboración, y el `UNIQUE (match_id)` impediría repararlo reintentando. Una CTE que modifica datos lo resuelve sin reservar un cliente del pool ni escribir `BEGIN`/`COMMIT` a mano, algo que además el pooler de Supabase en modo *transaction* desaconseja:
+
+```sql
+WITH accepted AS (
+  UPDATE matches m SET status = 'accepted'
+    FROM campaigns c JOIN brands b ON b.id = c.brand_id
+   WHERE m.id = $2 AND c.id = m.campaign_id
+     AND b.user_id = $1              -- la autorización, dentro del WHERE
+     AND m.status IN ('interested', 'accepted')
+  RETURNING m.id AS match_id, c.budget
+)
+INSERT INTO collaborations (match_id, agreed_amount)
+SELECT match_id, budget FROM accepted
+ON CONFLICT (match_id) DO UPDATE SET updated_at = now()
+```
+
+Tres detalles que no son accidentales:
+
+**El importe acordado sale del presupuesto de la campaña.** La marca ya lo publicó al crearla; volver a pedirlo al aceptar sería preguntar dos veces lo mismo. Negociarlo será una iteración posterior.
+
+**Aceptar dos veces no falla.** Se admite `accepted` como estado de entrada y el `ON CONFLICT` devuelve la colaboración que ya existía. Un doble clic no se convierte en un 404 confuso.
+
+**No se puede aceptar a quien no ha aplicado.** Un match en `suggested` no entra en el `IN (...)`: la marca no puede empujar a un creador a una colaboración que él no ha pedido.
+
+---
+
 ## Stack
 
 | Capa | Elección | Por qué |
@@ -186,7 +223,7 @@ El script imprime las credenciales de acceso al terminar.
 ### Tests
 
 ```
-✓ 32 consultas revisadas, todas cuadran
+✓ 35 consultas revisadas, todas cuadran
 # tests 19
 # pass 19
 # fail 0
@@ -245,8 +282,11 @@ Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native n
 - [x] Autenticación y perfiles
 - [x] Campañas y candidaturas
 - [x] Algoritmo de matching con puntuación explicada
-- [ ] Aceptar candidato y gestionar la colaboración
+- [x] Aceptar candidato y abrir la colaboración
+- [ ] Gestionar la colaboración: entregables, métricas y cierre
 - [ ] Subida de imágenes y vídeo (Supabase Storage)
+- [ ] Negociar el importe por candidato — hoy se hereda de la campaña
+- [ ] Que la marca pueda rechazar a un candidato — hoy solo puede aceptarlo
 - [ ] Pagos y comisión con Stripe
 - [ ] Briefs generados con IA
 - [ ] Detección de seguidores falsos

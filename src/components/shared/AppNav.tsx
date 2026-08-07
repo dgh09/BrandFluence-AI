@@ -30,6 +30,7 @@ const BRAND_NAV: NavItem[] = [
   { href: "/dashboard", label: "Inicio", Icon: House },
   { href: "/campaigns", label: "Campañas", Icon: Megaphone },
   { href: "/candidates", label: "Candidatos", Icon: Users },
+  { href: "/collaborations", label: "Colabos", Icon: Handshake },
   { href: "/profile", label: "Cuenta", Icon: CircleUser },
 ];
 

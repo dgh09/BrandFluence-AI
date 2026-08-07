@@ -5,7 +5,10 @@ import { Handshake } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { auth } from "@/lib/auth";
-import { listCreatorCollaborations } from "@/lib/queries/matches";
+import {
+  listBrandCollaborations,
+  listCreatorCollaborations,
+} from "@/lib/queries/matches";
 
 export const metadata: Metadata = { title: "Colaboraciones" };
 export const dynamic = "force-dynamic";
@@ -31,9 +34,13 @@ const PAYMENT: Record<string, string> = {
 export default async function CollaborationsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (session.user.userType === "brand") redirect("/candidates");
 
-  const collaborations = await listCreatorCollaborations(session.user.id);
+  // Las dos partes ven la misma pantalla; solo cambia quién es la
+  // contraparte: la marca para el creador, el creador para la marca.
+  const isBrand = session.user.userType === "brand";
+  const collaborations = isBrand
+    ? await listBrandCollaborations(session.user.id)
+    : await listCreatorCollaborations(session.user.id);
 
   return (
     <>
@@ -42,7 +49,9 @@ export default async function CollaborationsPage() {
           Tus colaboraciones
         </h1>
         <p className="mt-1 text-sm text-ink-secondary">
-          Campañas aceptadas y su estado de pago.
+          {isBrand
+            ? "Candidatos aceptados y su estado de pago."
+            : "Campañas aceptadas y su estado de pago."}
         </p>
       </header>
 
@@ -59,7 +68,9 @@ export default async function CollaborationsPage() {
                   <div className="min-w-0">
                     <p className="truncate font-semibold">{collab.campaignTitle}</p>
                     <p className="mt-0.5 truncate text-sm text-ink-secondary">
-                      {collab.counterpartName ?? "Marca"}
+                      {isBrand
+                        ? `@${collab.counterpartName ?? "sin-usuario"}`
+                        : (collab.counterpartName ?? "Marca")}
                     </p>
                   </div>
                   {/* Estado con texto, nunca solo color */}
@@ -90,7 +101,11 @@ export default async function CollaborationsPage() {
         <EmptyState
           icon={<Handshake size={28} />}
           title="Aún no hay colaboraciones"
-          description="Cuando una marca acepte tu candidatura, la colaboración aparecerá aquí."
+          description={
+            isBrand
+              ? "Cuando aceptes a un candidato, la colaboración aparecerá aquí."
+              : "Cuando una marca acepte tu candidatura, la colaboración aparecerá aquí."
+          }
         />
       )}
     </>
