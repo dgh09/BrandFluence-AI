@@ -42,7 +42,7 @@ Lo que ya funciona, verificado de extremo a extremo contra una base de datos rea
 | ✅ | **Aceptar candidato → crear colaboración** |
 | ✅ | **Entregables y cierre de la colaboración** |
 | ✅ | **Métricas de rendimiento reportadas por el creador** |
-| ✅ | **Subida de imágenes y vídeo** (requiere configurar Storage) |
+| ✅ | **Subida de imágenes y vídeo** a Supabase Storage |
 | 📋 | Pagos con Stripe, notificaciones por email |
 | 📋 | Apps nativas iOS y Android (Expo) |
 
@@ -225,7 +225,7 @@ navegador ──1. ¿puedo subir esto?──> /api/uploads ──> permiso firma
     └──3. guarda esta ruta─────────> /api/… ──> Postgres
 ```
 
-Un endpoint serverless admite un cuerpo de unos pocos MB. Un vídeo de 200 MB no cabe por ahí ni troceándolo, y aunque cupiera sería pagar por mover bytes que Supabase ya sabe recibir, con una función ocupada durante toda la subida.
+Un endpoint serverless admite un cuerpo de unos pocos MB. Un vídeo de 50 MB no cabe por ahí ni troceándolo, y aunque cupiera sería pagar por mover bytes que Supabase ya sabe recibir, con una función ocupada durante toda la subida.
 
 ### Lo que decide el servidor
 
@@ -240,7 +240,7 @@ Un endpoint serverless admite un cuerpo de unos pocos MB. Un vídeo de 200 MB no
 | Bucket | Qué guarda | Visibilidad | Máximo |
 |---|---|---|---|
 | `media` | avatares y logos | pública | 5 MB |
-| `deliverables` | el contenido entregado | **privada** | 200 MB |
+| `deliverables` | el contenido entregado | **privada** | 50 MB |
 
 Los avatares se enseñan en listados a gente que todavía no tiene ninguna relación con su dueño, y firmar cada miniatura sería una petición por avatar. El contenido entregado no: puede ser material de una campaña sin publicar y solo le importa a las dos partes de esa colaboración.
 
@@ -254,7 +254,9 @@ Los tipos, los tamaños y los buckets se declaran una sola vez en `src/lib/uploa
 - la validación del servidor, que es la que cuenta,
 - y los límites del propio bucket, que crea `scripts/check-storage.mjs` leyendo ese mismo fichero.
 
-Así no puede pasar que el bucket acepte 200 MB y el formulario crea que son 50.
+Así no puede pasar que el bucket acepte 50 MB y el formulario crea que son 200.
+
+> Los 50 MB son el techo del plan gratuito de Supabase: un bucket no puede superar el límite global del proyecto. En un plan de pago se sube en *Settings > Storage* y luego en `uploads.ts`.
 
 ### Puesta en marcha
 
@@ -262,6 +264,8 @@ Así no puede pasar que el bucket acepte 200 MB y el formulario crea que son 50.
 node scripts/check-storage.mjs --setup   # crea los buckets que falten
 node scripts/check-storage.mjs           # comprueba: sube, lee y borra
 ```
+
+La comprobación sube un PNG real de 1×1 —y no un `.txt`, que el bucket rechazaría por tipo antes de llegar a probar nada—, se lo descarga de vuelta por HTTP y lo borra. En el bucket privado comprueba además que **sin firmar no se lee**, que es la propiedad que de verdad importa: un bucket privado por error dejaría de serlo en silencio.
 
 Necesita `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`. Sin la service role key, `/api/uploads` responde **503**: falla cerrado, como el token de recálculo del matching.
 

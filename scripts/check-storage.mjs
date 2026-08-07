@@ -48,7 +48,12 @@ if (!url || !serviceKey) {
 // --- Las reglas, leídas del módulo que usa la app --------------------------
 // Se extraen con regex en lugar de importar el .ts porque este script corre
 // en node pelado, sin el resolutor de alias de Next.
-const source = readFileSync(path.join(root, "src/lib/uploads.ts"), "utf8");
+// Sin los comentarios de línea: si no, un `//` entre `types` y `maxBytes`
+// rompe la extracción, y lo hace en silencio —que es lo peligroso.
+const source = readFileSync(path.join(root, "src/lib/uploads.ts"), "utf8").replace(
+  /^\s*\/\/.*$/gm,
+  "",
+);
 
 function rulesFromSource() {
   const block = source.slice(source.indexOf("PURPOSE_RULES: Record"));
@@ -95,6 +100,34 @@ function typeNames(expression) {
 }
 
 const BUCKETS = rulesFromSource();
+
+/**
+ * Que la extracción haya encontrado TODOS los propósitos declarados.
+ *
+ * Sin esto, un cambio de formato en uploads.ts hace que el regex se salte un
+ * bucket y el script diga "todo listo" habiendo comprobado la mitad. Un
+ * verificador que verifica de menos sin avisar es peor que no tener ninguno.
+ */
+const declared = [...source.matchAll(/UPLOAD_PURPOSES\s*=\s*\[([\s\S]*?)\]/g)].flatMap(
+  (m) => [...m[1].matchAll(/"([^"]+)"/g)].map((p) => p[1]),
+);
+const parsed = BUCKETS.flatMap((b) => b.purposes);
+const missing = declared.filter((p) => !parsed.includes(p));
+
+if (declared.length === 0 || missing.length > 0) {
+  console.error(
+    `\n✗ No pude leer las reglas de src/lib/uploads.ts.\n` +
+      `  Declarados: ${declared.join(", ") || "(ninguno)"}\n` +
+      `  Encontrados: ${parsed.join(", ") || "(ninguno)"}\n` +
+      `  Cambió el formato de PURPOSE_RULES y hay que ajustar este script.\n`,
+  );
+  process.exit(1);
+}
+
+/** PNG transparente de 1×1. El fichero válido más pequeño que existe. */
+const ONE_PIXEL_PNG_BASE64 =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+
 const setup = process.argv.includes("--setup");
 
 const supabase = createClient(url, serviceKey, {
@@ -134,6 +167,15 @@ for (const rule of BUCKETS) {
     if (error) {
       problems++;
       console.log(`✗ ${label}: no se pudo crear — ${error.message}`);
+      // Este fallo concreto despista: no habla del bucket, habla del límite
+      // global del proyecto, que un bucket no puede superar.
+      if (/maximum allowed size/i.test(error.message)) {
+        console.log(
+          `  El proyecto no admite ficheros de ${Math.round(rule.maxBytes / 1024 / 1024)} MB.\n` +
+            "  El plan gratuito tope a 50 MB. Baja maxBytes en src/lib/uploads.ts,\n" +
+            "  o sube el límite en Supabase > Settings > Storage y vuelve a intentarlo.",
+        );
+      }
       continue;
     }
 
@@ -154,41 +196,75 @@ for (const rule of BUCKETS) {
     continue;
   }
 
-  // Round-trip: subir, leer y borrar.
-  const probe = `_check/${Date.now()}.txt`;
-  const body = new Blob(["brandfluence storage check"], { type: "text/plain" });
+  // Round-trip de verdad: subir, LEER de vuelta por HTTP y borrar.
+  //
+  // El fichero de prueba es un PNG real de 1×1 y no un texto, porque el
+  // bucket restringe los tipos: con un .txt el rechazo sería inmediato y
+  // nunca se llegaría a probar ni la escritura ni la lectura.
+  const probe = `_check/${Date.now()}.png`;
+  const body = Buffer.from(ONE_PIXEL_PNG_BASE64, "base64");
 
   const { error: uploadError } = await supabase.storage
     .from(rule.bucket)
-    .upload(probe, body, { contentType: "text/plain", upsert: true });
+    .upload(probe, body, { contentType: "image/png", upsert: true });
 
   if (uploadError) {
-    // Un rechazo por tipo MIME es esperable: el bucket restringe a
-    // imagen/vídeo y estamos subiendo texto. Eso significa que la
-    // restricción funciona.
-    if (/mime|content type/i.test(uploadError.message)) {
-      console.log(`✓ ${label}: ${bucket.public ? "público" : "privado"}, rechaza tipos no permitidos`);
-      continue;
-    }
     problems++;
     console.log(`✗ ${label}: no se pudo escribir — ${uploadError.message}`);
     continue;
   }
 
-  const { error: readError } = shouldBePublic
-    ? { error: null }
-    : await supabase.storage.from(rule.bucket).createSignedUrl(probe, 60);
+  // Un bucket público se lee por URL directa; uno privado, solo firmado.
+  // Se comprueba descargando de verdad: que la URL exista no prueba nada.
+  let readUrl;
+  if (shouldBePublic) {
+    readUrl = supabase.storage.from(rule.bucket).getPublicUrl(probe).data.publicUrl;
+  } else {
+    const { data, error } = await supabase.storage
+      .from(rule.bucket)
+      .createSignedUrl(probe, 60);
+    if (error) {
+      problems++;
+      console.log(`✗ ${label}: no se pudo firmar una lectura — ${error.message}`);
+      await supabase.storage.from(rule.bucket).remove([probe]);
+      continue;
+    }
+    readUrl = data.signedUrl;
+  }
+
+  const download = await fetch(readUrl);
+  const bytes = download.ok ? (await download.arrayBuffer()).byteLength : 0;
+
+  // Y que un bucket privado NO se deje leer sin firmar. Es la comprobación
+  // que de verdad importa: el contenido entregado puede ser material sin
+  // publicar, y un bucket privado por error dejaría de serlo en silencio.
+  let leaks = false;
+  if (!shouldBePublic) {
+    const naked = supabase.storage.from(rule.bucket).getPublicUrl(probe).data.publicUrl;
+    leaks = (await fetch(naked)).ok;
+  }
 
   await supabase.storage.from(rule.bucket).remove([probe]);
 
-  if (readError) {
+  if (!download.ok || bytes !== body.length) {
     problems++;
-    console.log(`✗ ${label}: no se pudo firmar una lectura — ${readError.message}`);
+    console.log(
+      `✗ ${label}: se escribió pero no se pudo leer de vuelta ` +
+        `(HTTP ${download.status}, ${bytes} de ${body.length} bytes)`,
+    );
+    continue;
+  }
+
+  if (leaks) {
+    problems++;
+    console.log(`✗ ${label}: ¡es privado pero se lee sin firmar!`);
     continue;
   }
 
   console.log(
-    `✓ ${label}: ${bucket.public ? "público" : "privado"}, escritura y lectura OK`,
+    `✓ ${label}: ${bucket.public ? "público" : "privado"} · ` +
+      `escritura y lectura OK (${bytes} bytes)` +
+      (shouldBePublic ? "" : " · no se lee sin firmar"),
   );
 }
 

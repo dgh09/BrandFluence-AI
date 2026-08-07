@@ -73,7 +73,12 @@ export const PURPOSE_RULES: Record<UploadPurpose, PurposeRule> = {
     bucket: "deliverables",
     visibility: "private",
     types: { ...IMAGE_TYPES, ...VIDEO_TYPES },
-    maxBytes: 200 * MB,
+    // 50 MB es el techo del plan gratuito de Supabase: un bucket no puede
+    // superar el límite global del proyecto, y crearlo con más falla con
+    // "The object exceeded the maximum allowed size". En un plan de pago se
+    // sube en Settings > Storage y luego aquí — este número manda sobre el
+    // formulario, la validación del servidor y el propio bucket.
+    maxBytes: 50 * MB,
     folder: "collaborations",
   },
 };
