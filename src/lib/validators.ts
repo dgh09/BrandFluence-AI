@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { INTERACTION_KEYS } from "./metrics";
 import { INDUSTRY_VALUES, NICHE_VALUES } from "./taxonomy";
+import { UPLOAD_PURPOSES } from "./uploads";
 
 /**
  * Esquemas Zod compartidos por API routes y formularios.
@@ -115,6 +116,43 @@ export const performanceMetricsSchema = z
     { message: "Ninguna interacción puede superar las visualizaciones" },
   );
 
+/**
+ * Petición de permiso de subida.
+ *
+ * No lleva ruta ni nombre de fichero: la ruta la construye el servidor desde
+ * la sesión. Si el cliente pudiera proponerla, podría escribir en la carpeta
+ * de otra persona o salirse del bucket con un `../`.
+ */
+export const uploadRequestSchema = z.object({
+  purpose: z.enum(UPLOAD_PURPOSES),
+  contentType: z.string().min(1).max(100),
+  size: z.number().int().positive(),
+  /** Obligatorio solo cuando el propósito es 'deliverable'. */
+  collaborationId: z.uuid().optional(),
+});
+
+/** Referencia al fichero entregado. Se guarda dentro del entregable. */
+export const mediaRefSchema = z.object({
+  path: z.string().min(1).max(500),
+  contentType: z.string().min(1).max(100),
+  name: z.string().max(255).optional(),
+});
+
+/**
+ * Cambio sobre un entregable. Los dos campos son opcionales pero hay que
+ * mandar al menos uno: un PATCH vacío no significa nada.
+ *
+ * `media: null` desadjunta el fichero, que es distinto de no mandar el campo.
+ */
+export const deliverablePatchSchema = z
+  .object({
+    done: z.boolean().optional(),
+    media: mediaRefSchema.nullable().optional(),
+  })
+  .refine((p) => p.done !== undefined || p.media !== undefined, {
+    message: "No hay nada que cambiar",
+  });
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreatorProfileInput = z.infer<typeof creatorProfileSchema>;
@@ -122,4 +160,7 @@ export type BrandProfileInput = z.infer<typeof brandProfileSchema>;
 export type CampaignInput = z.infer<typeof campaignSchema>;
 export type DeliverablesInput = z.infer<typeof deliverablesSchema>;
 export type PerformanceMetricsInput = z.infer<typeof performanceMetricsSchema>;
+export type UploadRequestInput = z.infer<typeof uploadRequestSchema>;
+export type MediaRef = z.infer<typeof mediaRefSchema>;
+export type DeliverablePatchInput = z.infer<typeof deliverablePatchSchema>;
 export type CollaborationStatusInput = z.infer<typeof collaborationStatusSchema>;

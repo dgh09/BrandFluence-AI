@@ -8,7 +8,7 @@ Matching con IA para campañas UGC.
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
-[![Tests](https://img.shields.io/badge/tests-31%20passing-2FA898)](#tests)
+[![Tests](https://img.shields.io/badge/tests-47%20passing-2FA898)](#tests)
 [![Estado](https://img.shields.io/badge/estado-MVP%20en%20desarrollo-FF3B4F)](#estado-del-proyecto)
 
 </div>
@@ -42,7 +42,7 @@ Lo que ya funciona, verificado de extremo a extremo contra una base de datos rea
 | ✅ | **Aceptar candidato → crear colaboración** |
 | ✅ | **Entregables y cierre de la colaboración** |
 | ✅ | **Métricas de rendimiento reportadas por el creador** |
-| 🚧 | Subida de imágenes y vídeo |
+| ✅ | **Subida de imágenes y vídeo** (requiere configurar Storage) |
 | 📋 | Pagos con Stripe, notificaciones por email |
 | 📋 | Apps nativas iOS y Android (Expo) |
 
@@ -213,6 +213,60 @@ Cinco cifras y un porcentaje **no son un gráfico**, son una fila de tiles. Un d
 
 ---
 
+## Subida de ficheros
+
+Fotos de perfil, logos y el contenido entregado. **Los bytes no pasan por esta app.**
+
+```
+navegador ──1. ¿puedo subir esto?──> /api/uploads ──> permiso firmado
+    │
+    └──2. el fichero, directo──────> Supabase Storage
+    │
+    └──3. guarda esta ruta─────────> /api/… ──> Postgres
+```
+
+Un endpoint serverless admite un cuerpo de unos pocos MB. Un vídeo de 200 MB no cabe por ahí ni troceándolo, y aunque cupiera sería pagar por mover bytes que Supabase ya sabe recibir, con una función ocupada durante toda la subida.
+
+### Lo que decide el servidor
+
+**La ruta del objeto, siempre.** El cliente pide permiso para "un `video/mp4` de 40 MB en esta colaboración"; nunca propone dónde va. Si la ruta viniera en la petición, cualquiera podría escribir en la carpeta de otra persona o salirse del bucket con un `../`.
+
+**La extensión sale del tipo declarado, no del nombre.** Un `foto.jpg.svg` se guardaría como `.svg` y el navegador lo abriría como documento, con su script dentro.
+
+**Allowlist, nunca denylist.** Una lista de lo prohibido siempre se queda corta: basta un formato nuevo para que se cuele algo que nadie previó.
+
+### Dos buckets, no uno
+
+| Bucket | Qué guarda | Visibilidad | Máximo |
+|---|---|---|---|
+| `media` | avatares y logos | pública | 5 MB |
+| `deliverables` | el contenido entregado | **privada** | 200 MB |
+
+Los avatares se enseñan en listados a gente que todavía no tiene ninguna relación con su dueño, y firmar cada miniatura sería una petición por avatar. El contenido entregado no: puede ser material de una campaña sin publicar y solo le importa a las dos partes de esa colaboración.
+
+Por eso el fichero entregado se sirve desde `/api/collaborations/[id]/deliverables/[deliverableId]/media`, que **comprueba el permiso en cada petición** y redirige a una URL firmada que caduca en un minuto. Guardar la URL firmada en la base no serviría: envejecería con la fila.
+
+### Reglas en un sitio, aplicadas en tres
+
+Los tipos, los tamaños y los buckets se declaran una sola vez en `src/lib/uploads.ts` —módulo puro, sin SDK y sin `node:crypto`, para que el navegador pueda importarlo—. De ahí salen:
+
+- el aviso del formulario, antes de empezar a subir algo que va a ser rechazado,
+- la validación del servidor, que es la que cuenta,
+- y los límites del propio bucket, que crea `scripts/check-storage.mjs` leyendo ese mismo fichero.
+
+Así no puede pasar que el bucket acepte 200 MB y el formulario crea que son 50.
+
+### Puesta en marcha
+
+```bash
+node scripts/check-storage.mjs --setup   # crea los buckets que falten
+node scripts/check-storage.mjs           # comprueba: sube, lee y borra
+```
+
+Necesita `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`. Sin la service role key, `/api/uploads` responde **503**: falla cerrado, como el token de recálculo del matching.
+
+---
+
 ## Stack
 
 | Capa | Elección | Por qué |
@@ -279,13 +333,14 @@ El script imprime las credenciales de acceso al terminar.
 | `node scripts/db-inspect.mjs` | Qué tablas, triggers y datos hay ahora mismo |
 | `node scripts/seed-demo.mjs` | Datos de demostración |
 | `node scripts/check-sql-params.mjs` | Verifica los parámetros de cada consulta |
+| `node scripts/check-storage.mjs --setup` | Crea los buckets de Storage |
 
 ### Tests
 
 ```
-✓ 41 consultas revisadas, todas cuadran
-# tests 31
-# pass 31
+✓ 42 consultas revisadas, todas cuadran
+# tests 47
+# pass 47
 # fail 0
 ```
 
@@ -310,6 +365,9 @@ src/
    ├─ matching.test.ts ← sus 19 tests
    ├─ metrics.ts       ← engagement derivado (función pura)
    ├─ metrics.test.ts  ← sus 12 tests
+   ├─ uploads.ts       ← reglas de subida (pura, vale en el navegador)
+   ├─ uploads.test.ts  ← sus 16 tests
+   ├─ storage.ts       ← Supabase Storage (solo servidor)
    ├─ queries/         acceso a datos por dominio
    ├─ taxonomy.ts      nichos y sectores
    ├─ design-tokens.ts tokens compartidos con la futura app móvil
@@ -350,7 +408,7 @@ Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native n
 - [x] Aceptar candidato y abrir la colaboración
 - [x] Gestionar la colaboración: entregables y cierre
 - [x] Métricas de rendimiento de la colaboración
-- [ ] Subida de imágenes y vídeo (Supabase Storage)
+- [x] Subida de imágenes y vídeo (Supabase Storage)
 - [ ] Negociar el importe por candidato — hoy se hereda de la campaña
 - [ ] Que la marca pueda rechazar a un candidato — hoy solo puede aceptarlo
 - [ ] Pagos y comisión con Stripe

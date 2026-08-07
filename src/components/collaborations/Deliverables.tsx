@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { Check, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { MediaUpload } from "@/components/ui/MediaUpload";
 import type { Deliverable, ViewerRole } from "@/lib/queries/collaborations";
+import { isVideo } from "@/lib/uploads";
 
 interface Props {
   collaborationId: string;
@@ -20,12 +22,53 @@ interface Draft {
   id?: string;
   title: string;
   done: boolean;
+  media: Deliverable["media"];
 }
 
 const dateFormat = new Intl.DateTimeFormat("es-ES", {
   day: "numeric",
   month: "short",
 });
+
+/**
+ * El fichero entregado.
+ *
+ * El `src` apunta a nuestra propia API, no a Supabase: esa ruta comprueba en
+ * cada petición que quien mira es parte de la colaboración y redirige a una
+ * URL firmada que caduca en un minuto. Guardar aquí la URL firmada no
+ * serviría, porque envejecería con la página.
+ */
+function MediaPreview({
+  collaborationId,
+  deliverable,
+}: {
+  collaborationId: string;
+  deliverable: Pick<Deliverable, "id" | "title" | "media">;
+}) {
+  if (!deliverable.media) return null;
+
+  const src = `/api/collaborations/${collaborationId}/deliverables/${deliverable.id}/media`;
+
+  return (
+    <div className="overflow-hidden rounded-tile bg-surface-3">
+      {isVideo(deliverable.media.contentType) ? (
+        <video
+          src={src}
+          controls
+          preload="metadata"
+          className="max-h-64 w-full bg-black"
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={deliverable.media.name ?? `Entregado: ${deliverable.title}`}
+          className="max-h-64 w-full object-contain"
+        />
+      )}
+    </div>
+  );
+}
 
 /**
  * El panel de entregables, que es donde vive el día a día de una
@@ -52,20 +95,28 @@ export function Deliverables({ collaborationId, initial, role, editable }: Props
             {items.map((item) => (
               <li
                 key={item.id}
-                className="flex items-center gap-3 rounded-tile bg-surface-2 px-3 py-2.5 text-sm"
+                className="flex flex-col gap-2 rounded-tile bg-surface-2 px-3 py-2.5 text-sm"
               >
-                <span
-                  className={item.done ? "text-good" : "text-ink-muted"}
-                  aria-hidden="true"
-                >
-                  <Check size={16} />
-                </span>
-                <span className={item.done ? "" : "text-ink-secondary"}>
-                  {item.title}
-                </span>
-                <span className="ml-auto shrink-0 text-xs text-ink-muted">
-                  {item.done ? "Entregado" : "Sin entregar"}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={item.done ? "text-good" : "text-ink-muted"}
+                    aria-hidden="true"
+                  >
+                    <Check size={16} />
+                  </span>
+                  <span className={item.done ? "" : "text-ink-secondary"}>
+                    {item.title}
+                  </span>
+                  <span className="ml-auto shrink-0 text-xs text-ink-muted">
+                    {item.done ? "Entregado" : "Sin entregar"}
+                  </span>
+                </div>
+                {/* El contenido sigue viéndose con la colaboración cerrada:
+                    es la prueba de lo que se entregó. */}
+                <MediaPreview
+                  collaborationId={collaborationId}
+                  deliverable={item}
+                />
               </li>
             ))}
           </ul>
@@ -142,7 +193,11 @@ function CreatorChecklist({
   const [pending, setPending] = useState<string | null>(null);
   const done = items.filter((item) => item.done).length;
 
-  async function toggle(deliverable: Deliverable) {
+  /** Una sola función para los dos cambios: el endpoint acepta un parche. */
+  async function patch(
+    deliverable: Deliverable,
+    body: { done?: boolean; media?: Deliverable["media"] },
+  ) {
     setPending(deliverable.id);
     onError(null);
 
@@ -151,7 +206,7 @@ function CreatorChecklist({
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: !deliverable.done }),
+        body: JSON.stringify(body),
       },
     );
 
@@ -174,19 +229,19 @@ function CreatorChecklist({
       {items.length > 0 ? (
         <ul className="flex flex-col gap-2">
           {items.map((item) => (
-            <li key={item.id}>
-              <label
-                className={[
-                  "flex cursor-pointer items-center gap-3 rounded-tile bg-surface-2 px-3 py-2.5 text-sm",
-                  "border border-transparent transition-colors hover:border-line-strong",
-                  pending === item.id ? "opacity-50" : "",
-                ].join(" ")}
-              >
+            <li
+              key={item.id}
+              className={[
+                "flex flex-col gap-2 rounded-tile bg-surface-2 p-2.5",
+                pending === item.id ? "opacity-50" : "",
+              ].join(" ")}
+            >
+              <label className="flex cursor-pointer items-center gap-3 text-sm">
                 <input
                   type="checkbox"
                   checked={item.done}
                   disabled={pending !== null}
-                  onChange={() => toggle(item)}
+                  onChange={() => patch(item, { done: !item.done })}
                   className="size-4 shrink-0 accent-[var(--color-good)]"
                 />
                 <span className={item.done ? "text-ink-secondary line-through" : ""}>
@@ -198,6 +253,35 @@ function CreatorChecklist({
                   </span>
                 ) : null}
               </label>
+
+              <MediaPreview collaborationId={collaborationId} deliverable={item} />
+
+              {item.media ? (
+                <button
+                  type="button"
+                  disabled={pending !== null}
+                  onClick={() => patch(item, { media: null })}
+                  className="self-start text-xs font-medium text-ink-muted underline-offset-2 transition-colors hover:text-critical hover:underline"
+                >
+                  Quitar {item.media.name ?? "el fichero"}
+                </button>
+              ) : (
+                <MediaUpload
+                  purpose="deliverable"
+                  collaborationId={collaborationId}
+                  label="Adjuntar contenido"
+                  disabled={pending !== null}
+                  onUploaded={(media) =>
+                    patch(item, {
+                      media: {
+                        path: media.path,
+                        contentType: media.contentType,
+                        name: media.name,
+                      },
+                    })
+                  }
+                />
+              )}
             </li>
           ))}
         </ul>
@@ -227,7 +311,7 @@ function BrandEditor({
   onError: (message: string | null) => void;
 }) {
   const [drafts, setDrafts] = useState<Draft[]>(() =>
-    items.map(({ id, title, done }) => ({ id, title, done })),
+    items.map(({ id, title, done, media }) => ({ id, title, done, media })),
   );
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -277,7 +361,9 @@ function BrandEditor({
     }
 
     const data = (await response.json()) as { deliverables: Deliverable[] };
-    setDrafts(data.deliverables.map(({ id, title, done }) => ({ id, title, done })));
+    setDrafts(
+      data.deliverables.map(({ id, title, done, media }) => ({ id, title, done, media })),
+    );
     setSaved(true);
     onSaved(data.deliverables);
   }
@@ -292,7 +378,8 @@ function BrandEditor({
 
       <ul className="flex flex-col gap-2">
         {drafts.map((draft, index) => (
-          <li key={draft.id ?? `nuevo-${index}`} className="flex items-center gap-2">
+          <li key={draft.id ?? `nuevo-${index}`} className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
             <input
               value={draft.title}
               onChange={(event) => update(index, event.target.value)}
@@ -320,6 +407,16 @@ function BrandEditor({
             >
               <Trash2 size={18} aria-hidden="true" />
             </button>
+            </div>
+
+            {/* La marca ve lo entregado, pero no lo toca: subir y quitar
+                ficheros es cosa de quien los produjo. */}
+            {draft.id ? (
+              <MediaPreview
+                collaborationId={collaborationId}
+                deliverable={{ id: draft.id, title: draft.title, media: draft.media }}
+              />
+            ) : null}
           </li>
         ))}
       </ul>
@@ -336,7 +433,10 @@ function BrandEditor({
           disabled={drafts.length >= 20}
           onClick={() => {
             setSaved(false);
-            setDrafts((current) => [...current, { title: "", done: false }]);
+            setDrafts((current) => [
+              ...current,
+              { title: "", done: false, media: null },
+            ]);
           }}
         >
           Añadir

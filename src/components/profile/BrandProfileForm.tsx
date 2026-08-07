@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { MediaUpload } from "@/components/ui/MediaUpload";
 import { Select } from "@/components/ui/Select";
 import { INDUSTRIES } from "@/lib/taxonomy";
 import type { BrandProfile } from "@/lib/queries/profile";
@@ -14,6 +17,7 @@ export function BrandProfileForm({ profile }: { profile: BrandProfile }) {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, setPending] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(profile.logoUrl);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -31,6 +35,7 @@ export function BrandProfileForm({ profile }: { profile: BrandProfile }) {
         companyName: String(form.get("companyName") ?? ""),
         industry: String(form.get("industry") ?? ""),
         ...(budget ? { monthlyBudget: Number(budget) } : {}),
+        ...(logoUrl ? { logoUrl } : {}),
       }),
     });
 
@@ -48,6 +53,21 @@ export function BrandProfileForm({ profile }: { profile: BrandProfile }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <Card className="flex items-center gap-4">
+        <Avatar url={logoUrl} alt="Logo de tu marca" shape="tile" />
+        <div className="min-w-0 flex-1">
+          <p className="mb-2 text-sm font-medium">Logo</p>
+          <MediaUpload
+            purpose="logo"
+            label={logoUrl ? "Cambiar logo" : "Subir logo"}
+            onUploaded={(media) => setLogoUrl(media.publicUrl)}
+          />
+          <p className="mt-1.5 text-xs text-ink-muted">
+            Se guarda al pulsar «Guardar cambios».
+          </p>
+        </div>
+      </Card>
+
       <Input
         label="Nombre de la empresa"
         name="companyName"

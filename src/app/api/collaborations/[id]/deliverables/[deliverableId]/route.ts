@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
-import { setDeliverableDone } from "@/lib/queries/collaborations";
-import { deliverableDoneSchema } from "@/lib/validators";
+import { patchDeliverable } from "@/lib/queries/collaborations";
+import { deliverablePatchSchema } from "@/lib/validators";
 
 /**
  * PATCH /api/collaborations/[id]/deliverables/[deliverableId]
  *
- * El creador marca un entregable como hecho, o se desdice. Es la única parte
- * del ciclo de vida que le corresponde a él: la marca dice qué hay que
- * entregar, el creador dice qué ha entregado.
+ * El creador marca un entregable como hecho, se desdice, o adjunta —o
+ * quita— el fichero entregado. Es la parte del ciclo de vida que le
+ * corresponde a él: la marca dice qué hay que entregar, el creador dice qué
+ * ha entregado y enseña el qué.
  *
  * Un endpoint por entregable, y no un PUT de la lista entera, para que dos
- * marcados seguidos no se pisen entre ellos.
+ * cambios seguidos no se pisen.
+ *
+ * Ojo con el cuerpo: `media: null` desadjunta, y no mandar `media` lo deja
+ * como estaba. Son cosas distintas y por eso el esquema las distingue.
  */
 export async function PATCH(
   request: Request,
@@ -36,7 +40,7 @@ export async function PATCH(
     return NextResponse.json({ error: "JSON no válido" }, { status: 400 });
   }
 
-  const parsed = deliverableDoneSchema.safeParse(body);
+  const parsed = deliverablePatchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Datos no válidos", issues: parsed.error.issues },
@@ -46,11 +50,11 @@ export async function PATCH(
 
   const { id, deliverableId } = await params;
 
-  const deliverables = await setDeliverableDone(
+  const deliverables = await patchDeliverable(
     session.user.id,
     id,
     deliverableId,
-    parsed.data.done,
+    parsed.data,
   );
   if (!deliverables) {
     return NextResponse.json(

@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BadgeCheck } from "lucide-react";
 
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { MediaUpload } from "@/components/ui/MediaUpload";
 import { Select, Textarea } from "@/components/ui/Select";
 import { NICHES } from "@/lib/taxonomy";
 import type { CreatorProfile } from "@/lib/queries/profile";
@@ -16,6 +18,7 @@ export function CreatorProfileForm({ profile }: { profile: CreatorProfile }) {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, setPending] = useState(false);
+  const [imageUrl, setImageUrl] = useState(profile.profileImageUrl);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,6 +39,7 @@ export function CreatorProfileForm({ profile }: { profile: CreatorProfile }) {
         followerCount: Number(form.get("followerCount") ?? 0),
         // Campo opcional: si va vacío se omite en vez de mandar 0.
         ...(engagement ? { engagementRate: Number(engagement) } : {}),
+        ...(imageUrl ? { profileImageUrl: imageUrl } : {}),
       }),
     });
 
@@ -64,6 +68,21 @@ export function CreatorProfileForm({ profile }: { profile: CreatorProfile }) {
           </p>
         </Card>
       ) : null}
+
+      <Card className="flex items-center gap-4">
+        <Avatar url={imageUrl} alt="Tu foto de perfil" />
+        <div className="min-w-0 flex-1">
+          <p className="mb-2 text-sm font-medium">Foto de perfil</p>
+          <MediaUpload
+            purpose="avatar"
+            label={imageUrl ? "Cambiar foto" : "Subir foto"}
+            onUploaded={(media) => setImageUrl(media.publicUrl)}
+          />
+          <p className="mt-1.5 text-xs text-ink-muted">
+            Se guarda al pulsar «Guardar cambios».
+          </p>
+        </div>
+      </Card>
 
       <Input
         label="Nombre de usuario"

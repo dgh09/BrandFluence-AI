@@ -7,7 +7,9 @@ import {
   type PerformanceMetrics,
 } from "@/lib/metrics";
 import type {
+  DeliverablePatchInput,
   DeliverablesInput,
+  MediaRef,
   PerformanceMetricsInput,
 } from "@/lib/validators";
 
@@ -30,6 +32,8 @@ export interface Deliverable {
   title: string;
   done: boolean;
   doneAt: string | null;
+  /** El fichero entregado, si lo hay. Vive en el bucket privado. */
+  media: MediaRef | null;
 }
 
 export interface CollaborationRow {
@@ -64,7 +68,7 @@ function parseDeliverables(raw: unknown): Deliverable[] {
 
   return raw.flatMap((item) => {
     if (!item || typeof item !== "object") return [];
-    const { id, title, done, doneAt } = item as Record<string, unknown>;
+    const { id, title, done, doneAt, media } = item as Record<string, unknown>;
     if (typeof id !== "string" || typeof title !== "string") return [];
     return [
       {
@@ -72,9 +76,24 @@ function parseDeliverables(raw: unknown): Deliverable[] {
         title,
         done: done === true,
         doneAt: typeof doneAt === "string" ? doneAt : null,
+        media: parseMediaRef(media),
       },
     ];
   });
+}
+
+/** Un adjunto a medio escribir se descarta entero: media a medias no sirve. */
+function parseMediaRef(raw: unknown): MediaRef | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+
+  const { path, contentType, name } = raw as Record<string, unknown>;
+  if (typeof path !== "string" || typeof contentType !== "string") return null;
+
+  return {
+    path,
+    contentType,
+    ...(typeof name === "string" ? { name } : {}),
+  };
 }
 
 /** Cuenta entregables sin traerlos: se usa en las dos listas. */
@@ -266,6 +285,10 @@ export async function setPerformanceMetrics(
  * Los que llegan se conservan solo si ya estaban en esta colaboración —el
  * LEFT JOIN no encuentra nada para un id inventado y el entregable nace
  * pendiente.
+ *
+ * Lo que se conserva es lo que aporta la otra parte: el estado de entregado
+ * y el fichero adjunto. Reordenar la lista o corregir una falta en un título
+ * no puede costarle al creador el vídeo que ya había subido.
  */
 export async function setDeliverables(
   userId: string,
@@ -286,13 +309,16 @@ export async function setDeliverables(
                     'id',     incoming->>'id',
                     'title',  incoming->>'title',
                     'done',   coalesce(previous.done, false),
-                    'doneAt', to_jsonb(previous.done_at)
+                    'doneAt', to_jsonb(previous.done_at),
+                    'media',  previous.media
                   ) ORDER BY ord),
                 '[]'::jsonb)
                 FROM jsonb_array_elements($3::jsonb)
                      WITH ORDINALITY AS t(incoming, ord)
                 LEFT JOIN LATERAL (
-                  SELECT (d->>'done')::boolean AS done, d->>'doneAt' AS done_at
+                  SELECT (d->>'done')::boolean AS done,
+                         d->>'doneAt'          AS done_at,
+                         d->'media'            AS media
                     FROM jsonb_array_elements(
                            coalesce(co.deliverables, '[]'::jsonb)) AS d
                    WHERE d->>'id' = incoming->>'id'
@@ -314,33 +340,44 @@ export async function setDeliverables(
 }
 
 /**
- * El creador marca un entregable como hecho, o se desdice.
+ * El creador cambia un entregable: lo marca como hecho, se desdice, o
+ * adjunta —o quita— el fichero entregado.
+ *
+ * Recibe un parche y lo funde con `||` sobre ese elemento. Un parche en vez
+ * de un campo por función porque las dos cosas se editan igual y con las
+ * mismas reglas; tener dos consultas casi idénticas sería la forma de que un
+ * día una arreglara un fallo y la otra no.
  *
  * Reescribe el array elemento a elemento en vez de sustituirlo entero: así
- * dos entregables marcados a la vez no se pisan, y una edición de títulos
+ * dos entregables tocados a la vez no se pisan, y una edición de títulos
  * concurrente de la marca tampoco se pierde.
  *
  * El `@>` del final es lo que distingue "no existe ese entregable" de "lo he
- * marcado": sin él, un id inventado dejaría la fila intacta y devolvería un
+ * cambiado": sin él, un id inventado dejaría la fila intacta y devolvería un
  * 200 mintiendo.
  */
-export async function setDeliverableDone(
+export async function patchDeliverable(
   userId: string,
   collaborationId: string,
   deliverableId: string,
-  done: boolean,
+  patch: DeliverablePatchInput,
 ): Promise<Deliverable[] | null> {
+  const fields: Record<string, unknown> = {};
+
+  if (patch.done !== undefined) {
+    fields.done = patch.done;
+    // Desmarcar borra la fecha: conservarla diría que se entregó algo que
+    // ahora mismo consta como no entregado.
+    fields.doneAt = patch.done ? new Date().toISOString() : null;
+  }
+
+  if (patch.media !== undefined) fields.media = patch.media;
+
   const row = await queryOne<{ deliverables: unknown }>(
     `UPDATE collaborations co
         SET deliverables = (
               SELECT jsonb_agg(
-                CASE WHEN d->>'id' = $3
-                     THEN d || jsonb_build_object(
-                            'done', $4::boolean,
-                            'doneAt', CASE WHEN $4::boolean
-                                           THEN to_jsonb(now())
-                                           ELSE 'null'::jsonb END)
-                     ELSE d END
+                CASE WHEN d->>'id' = $3 THEN d || $4::jsonb ELSE d END
                 ORDER BY ord)
                 FROM jsonb_array_elements(
                        coalesce(co.deliverables, '[]'::jsonb))
@@ -355,10 +392,41 @@ export async function setDeliverableDone(
         AND coalesce(co.deliverables, '[]'::jsonb)
               @> jsonb_build_array(jsonb_build_object('id', $3::text))
       RETURNING co.deliverables`,
-    [userId, collaborationId, deliverableId, done],
+    [userId, collaborationId, deliverableId, JSON.stringify(fields)],
   );
 
   return row ? parseDeliverables(row.deliverables) : null;
+}
+
+/**
+ * Ruta del fichero adjunto a un entregable, si quien pregunta es parte de la
+ * colaboración.
+ *
+ * Existe para que la ruta que sirve el fichero no tenga que traerse el
+ * detalle entero, y sobre todo para que la comprobación de "¿puede ver
+ * esto?" sea la misma consulta que decide qué se devuelve.
+ */
+export async function getDeliverableMedia(
+  userId: string,
+  collaborationId: string,
+  deliverableId: string,
+): Promise<MediaRef | null> {
+  const row = await queryOne<{ media: unknown }>(
+    `SELECT d->'media' AS media
+       FROM collaborations co
+       JOIN matches   m  ON m.id  = co.match_id
+       JOIN creators  cr ON cr.id = m.creator_id
+       JOIN campaigns c  ON c.id  = m.campaign_id
+       JOIN brands    b  ON b.id  = c.brand_id
+       CROSS JOIN LATERAL jsonb_array_elements(
+                            coalesce(co.deliverables, '[]'::jsonb)) AS d
+      WHERE co.id = $2
+        AND (cr.user_id = $1 OR b.user_id = $1)
+        AND d->>'id' = $3`,
+    [userId, collaborationId, deliverableId],
+  );
+
+  return row ? parseMediaRef(row.media) : null;
 }
 
 /**
