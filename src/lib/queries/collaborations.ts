@@ -1,7 +1,17 @@
 import { randomUUID } from "node:crypto";
 
 import { query, queryOne } from "@/lib/db";
-import type { DeliverablesInput } from "@/lib/validators";
+import {
+  METRIC_KEYS,
+  parseMetrics,
+  type PerformanceMetrics,
+} from "@/lib/metrics";
+import type {
+  DeliverablesInput,
+  PerformanceMetricsInput,
+} from "@/lib/validators";
+
+export type { MetricKey, PerformanceMetrics } from "@/lib/metrics";
 
 /**
  * Acceso a datos de las colaboraciones.
@@ -37,6 +47,8 @@ export interface CollaborationRow {
 export interface CollaborationDetail extends CollaborationRow {
   campaignDescription: string | null;
   deliverables: Deliverable[];
+  /** null mientras el creador no haya reportado nada. */
+  metrics: PerformanceMetrics | null;
   /** Qué papel juega quien está mirando. Decide qué acciones se ofrecen. */
   viewerRole: ViewerRole;
   createdAt: string;
@@ -156,12 +168,13 @@ export async function getCollaboration(
     ListRow & {
       campaign_description: string | null;
       deliverables: unknown;
+      performance_metrics: unknown;
       viewer_role: ViewerRole;
       created_at: Date;
     }
   >(
     `SELECT co.id, co.status, co.payment_status, co.agreed_amount,
-            co.deliverables, co.created_at,
+            co.deliverables, co.performance_metrics, co.created_at,
             c.title AS campaign_title,
             c.description AS campaign_description,
             CASE WHEN b.user_id = $1 THEN cr.username ELSE b.company_name END
@@ -185,9 +198,56 @@ export async function getCollaboration(
     ...toCollaborationRow(row),
     campaignDescription: row.campaign_description,
     deliverables: parseDeliverables(row.deliverables),
+    metrics: parseMetrics(row.performance_metrics),
     viewerRole: row.viewer_role,
     createdAt: row.created_at.toISOString(),
   };
+}
+
+/**
+ * El creador reporta cómo funcionó el contenido.
+ *
+ * Aquí no hace falta el merge en SQL que sí necesitan los entregables: en
+ * esta columna escribe una sola persona, así que sustituir el objeto entero
+ * no puede pisarle nada a nadie.
+ *
+ * Se admite también con la colaboración `completed`, y no solo `active`. Los
+ * números de un vídeo siguen subiendo días después de publicarlo, y la marca
+ * suele dar por cerrada la colaboración antes de que se estabilicen; atarlo
+ * a 'active' condenaría a que las cifras finales no se pudieran registrar
+ * nunca. En una cancelada no hay nada que medir.
+ *
+ * Mandar todos los campos vacíos borra el reporte: es la forma natural de
+ * deshacer una equivocación desde el mismo formulario.
+ */
+export async function setPerformanceMetrics(
+  userId: string,
+  collaborationId: string,
+  input: PerformanceMetricsInput,
+): Promise<{ metrics: PerformanceMetrics | null } | null> {
+  const reported = METRIC_KEYS.some((key) => input[key] !== undefined);
+  const payload = reported
+    ? JSON.stringify({ ...input, reportedAt: new Date().toISOString() })
+    : null;
+
+  const row = await queryOne<{ performance_metrics: unknown }>(
+    `UPDATE collaborations co
+        SET performance_metrics = $3::jsonb
+       FROM matches  m
+       JOIN creators cr ON cr.id = m.creator_id
+      WHERE co.match_id = m.id
+        AND co.id = $2
+        AND cr.user_id = $1
+        AND co.status <> 'cancelled'
+      RETURNING co.performance_metrics`,
+    [userId, collaborationId, payload],
+  );
+
+  // El envoltorio existe porque hay dos "vacíos" distintos: no volver
+  // ninguna fila es "no autorizado", y volver una fila con la columna a null
+  // es "reporte borrado con éxito". Devolver `null` a secas los confundiría
+  // y el endpoint respondería 404 a un borrado que sí funcionó.
+  return row ? { metrics: parseMetrics(row.performance_metrics) } : null;
 }
 
 /**

@@ -8,7 +8,7 @@ Matching con IA para campañas UGC.
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
-[![Tests](https://img.shields.io/badge/tests-19%20passing-2FA898)](#tests)
+[![Tests](https://img.shields.io/badge/tests-31%20passing-2FA898)](#tests)
 [![Estado](https://img.shields.io/badge/estado-MVP%20en%20desarrollo-FF3B4F)](#estado-del-proyecto)
 
 </div>
@@ -41,7 +41,7 @@ Lo que ya funciona, verificado de extremo a extremo contra una base de datos rea
 | ✅ | Panel diferenciado para creador y para marca |
 | ✅ | **Aceptar candidato → crear colaboración** |
 | ✅ | **Entregables y cierre de la colaboración** |
-| 🚧 | Métricas de rendimiento al cerrar |
+| ✅ | **Métricas de rendimiento reportadas por el creador** |
 | 🚧 | Subida de imágenes y vídeo |
 | 📋 | Pagos con Stripe, notificaciones por email |
 | 📋 | Apps nativas iOS y Android (Expo) |
@@ -193,6 +193,24 @@ Y marcar un entregable reescribe solo ese elemento, no la lista entera, para que
 
 **Los ids los genera el servidor.** Si vinieran del cliente, una marca podría mandar el id de otra fila y arrastrar su estado de "entregado" a un entregable distinto. Un id que no estaba ya en esta colaboración simplemente no encuentra pareja en el `LEFT JOIN`, y el entregable nace pendiente.
 
+### Y al final, cómo funcionó
+
+El creador reporta visualizaciones, likes, comentarios, compartidos y guardados. Todo opcional: no todas las plataformas dan lo mismo, y obligar a rellenar un campo que no existe se resuelve inventándoselo.
+
+**El engagement se calcula, no se guarda.** Un porcentaje almacenado junto a los números de los que sale es una contradicción esperando a ocurrir en cuanto alguien corrija una cifra.
+
+Tres decisiones heredadas del resto del proyecto:
+
+**"Sin visualizaciones" no es "0% de engagement".** Sin denominador no se puede dividir, y devolver un cero pondría al creador que aún no ha reportado en el mismo sitio que a uno cuyo vídeo no le interesó a nadie. Es exactamente la misma distinción que hace el algoritmo de matching con el campo vacío, y está cubierta por tests.
+
+**Se puede reportar con la colaboración ya completada.** Los números de un vídeo siguen subiendo días después de publicarlo, y la marca suele cerrar antes de que se estabilicen. Atarlo a `active` condenaría a que las cifras finales no se registraran nunca. En una cancelada no hay nada que medir.
+
+**Aquí no hace falta el merge en SQL de los entregables.** En esta columna escribe una sola persona, así que sustituir el objeto entero no puede pisarle nada a nadie. La complejidad de allí no era gratuita: era el precio de tener dos autores.
+
+El validador rechaza un reporte con más likes que visualizaciones. No es una regla de negocio, es un cazador de erratas: el fallo típico es un cero de más al teclear.
+
+Cinco cifras y un porcentaje **no son un gráfico**, son una fila de tiles. Un diagrama de barras con "likes" y "visualizaciones" en el mismo eje solo enseñaría que uno es mucho más grande que el otro, que ya se ve leyendo los números.
+
 ---
 
 ## Stack
@@ -265,9 +283,9 @@ El script imprime las credenciales de acceso al terminar.
 ### Tests
 
 ```
-✓ 40 consultas revisadas, todas cuadran
-# tests 19
-# pass 19
+✓ 41 consultas revisadas, todas cuadran
+# tests 31
+# pass 31
 # fail 0
 ```
 
@@ -281,13 +299,17 @@ El script imprime las credenciales de acceso al terminar.
 src/
 ├─ app/
 │  ├─ (auth)/          login · signup
-│  ├─ (dashboard)/     panel · matches · campañas · candidatos · perfil
+│  ├─ (dashboard)/     panel · matches · campañas · candidatos ·
+│  │                   colaboraciones · perfil
 │  ├─ api/             toda la lógica de negocio
 │  └─ onboarding/      elección de tipo de cuenta tras entrar con Google
-├─ components/         ui/ · dashboard/ · profile/ · campaigns/ · shared/
+├─ components/         ui/ · dashboard/ · profile/ · campaigns/ ·
+│                      collaborations/ · shared/
 └─ lib/
    ├─ matching.ts      ← el algoritmo (función pura)
    ├─ matching.test.ts ← sus 19 tests
+   ├─ metrics.ts       ← engagement derivado (función pura)
+   ├─ metrics.test.ts  ← sus 12 tests
    ├─ queries/         acceso a datos por dominio
    ├─ taxonomy.ts      nichos y sectores
    ├─ design-tokens.ts tokens compartidos con la futura app móvil
@@ -327,7 +349,7 @@ Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native n
 - [x] Algoritmo de matching con puntuación explicada
 - [x] Aceptar candidato y abrir la colaboración
 - [x] Gestionar la colaboración: entregables y cierre
-- [ ] Métricas de rendimiento de la colaboración
+- [x] Métricas de rendimiento de la colaboración
 - [ ] Subida de imágenes y vídeo (Supabase Storage)
 - [ ] Negociar el importe por candidato — hoy se hereda de la campaña
 - [ ] Que la marca pueda rechazar a un candidato — hoy solo puede aceptarlo

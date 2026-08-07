@@ -5,6 +5,7 @@ import { ChevronLeft } from "lucide-react";
 
 import { CloseActions } from "@/components/collaborations/CloseActions";
 import { Deliverables } from "@/components/collaborations/Deliverables";
+import { PerformanceMetrics } from "@/components/collaborations/PerformanceMetrics";
 import {
   PAYMENT_LABEL,
   StatusBadge,
@@ -117,6 +118,20 @@ export default async function CollaborationPage({
             />
           ) : null}
         </Card>
+
+        {/* Sigue estando una vez completada: los números de un vídeo tardan
+            días en estabilizarse y la marca cierra antes. Solo desaparece si
+            la colaboración se canceló, donde no hay nada que medir. */}
+        {collaboration.status !== "cancelled" ? (
+          <Card>
+            <PerformanceMetrics
+              collaborationId={collaboration.id}
+              initial={collaboration.metrics}
+              role={collaboration.viewerRole}
+              editable={collaboration.status !== "cancelled"}
+            />
+          </Card>
+        ) : null}
       </div>
     </>
   );

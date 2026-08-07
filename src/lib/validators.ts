@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { INTERACTION_KEYS } from "./metrics";
 import { INDUSTRY_VALUES, NICHE_VALUES } from "./taxonomy";
 
 /**
@@ -84,10 +85,41 @@ export const collaborationStatusSchema = z.object({
   status: z.enum(["completed", "cancelled"]),
 });
 
+/**
+ * Métricas de rendimiento de una colaboración, que reporta el creador.
+ *
+ * Todas opcionales: no todas las plataformas dan lo mismo, y obligar a
+ * rellenar un campo que no existe se resuelve inventándoselo.
+ */
+const metricCount = z
+  .number({ message: "Tiene que ser un número" })
+  .int("Sin decimales")
+  .min(0, "No puede ser negativo")
+  .max(10_000_000_000)
+  .optional();
+
+export const performanceMetricsSchema = z
+  .object({
+    views: metricCount,
+    likes: metricCount,
+    comments: metricCount,
+    shares: metricCount,
+    saves: metricCount,
+  })
+  // Nadie da más likes que visualizaciones. No es una regla de negocio, es
+  // un cazador de erratas: el fallo típico es un cero de más al teclear.
+  .refine(
+    (m) =>
+      m.views === undefined ||
+      INTERACTION_KEYS.every((key) => m[key] === undefined || m[key] <= m.views!),
+    { message: "Ninguna interacción puede superar las visualizaciones" },
+  );
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreatorProfileInput = z.infer<typeof creatorProfileSchema>;
 export type BrandProfileInput = z.infer<typeof brandProfileSchema>;
 export type CampaignInput = z.infer<typeof campaignSchema>;
 export type DeliverablesInput = z.infer<typeof deliverablesSchema>;
+export type PerformanceMetricsInput = z.infer<typeof performanceMetricsSchema>;
 export type CollaborationStatusInput = z.infer<typeof collaborationStatusSchema>;
