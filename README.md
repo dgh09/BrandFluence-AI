@@ -29,7 +29,7 @@ BrandFluence AI puntúa cada pareja creador–campaña del 0 al 100 y explica po
 
 > **MVP en desarrollo activo. Todavía no está desplegado ni tiene usuarios reales.**
 
-Lo que ya funciona, verificado de extremo a extremo contra una base de datos real:
+Lo que ya funciona, recorrido entero en el navegador contra una base de datos y un Storage reales:
 
 | | |
 |---|---|
@@ -335,9 +335,13 @@ El script imprime las credenciales de acceso al terminar.
 | `npm run build` | Compilación de producción |
 | `npm test` | Auditoría de SQL + tests del algoritmo |
 | `node scripts/db-inspect.mjs` | Qué tablas, triggers y datos hay ahora mismo |
-| `node scripts/seed-demo.mjs` | Datos de demostración |
+| `node scripts/seed-demo.mjs` | Datos de demostración (`--clean` los borra) |
 | `node scripts/check-sql-params.mjs` | Verifica los parámetros de cada consulta |
 | `node scripts/check-storage.mjs --setup` | Crea los buckets de Storage |
+| `node scripts/check-storage.mjs` | Sube, lee y borra un fichero de prueba |
+
+> `seed-demo.mjs --clean` borra los usuarios de demo y todo lo que cuelga de
+> ellos, pero **no** los ficheros que hubiera en Storage. Está en la hoja de ruta.
 
 ### Tests
 
@@ -349,6 +353,19 @@ El script imprime las credenciales de acceso al terminar.
 ```
 
 `check-sql-params.mjs` existe por un motivo concreto: escribir `$2` en una consulta pasando un solo parámetro es un error que **TypeScript no detecta** —no mira dentro de la cadena SQL— y que Postgres solo revela en tiempo de ejecución con un `42P18`. Se coló dos veces antes de automatizar la comprobación.
+
+### Cuatro capas, porque cada una deja pasar lo de la siguiente
+
+| Capa | Qué caza | Qué se le escapa |
+|---|---|---|
+| `tsc` | tipos | todo lo que vive dentro de una cadena SQL |
+| `npm test` | la lógica pura: matching, engagement, reglas de subida | cualquier cosa que toque la base |
+| Consultas contra Postgres, en una transacción con `ROLLBACK` | autorización, invariantes, transiciones de estado | que la UI llame bien a esas consultas |
+| El recorrido en el navegador | que todo lo anterior esté conectado | — |
+
+Las dos últimas no son opcionales. **Dos fallos reales no los cazó ninguna de las tres primeras**: la foto de perfil se subía bien y se veía en pantalla, pero el `UPDATE` no incluía la columna y se perdía al recargar; y un `<input type="number">` cambiaba de valor al pasar la rueda del ratón por encima, de forma que escribir 840 likes guardaba 842. Los dos parecían funcionar hasta que alguien usó la app.
+
+Las comprobaciones contra la base van siempre dentro de `BEGIN … ROLLBACK` y **extraen el SQL del propio módulo** en vez de copiarlo, para no acabar verificando una copia que se quedó atrás.
 
 ---
 
@@ -415,6 +432,7 @@ Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native n
 - [x] Subida de imágenes y vídeo (Supabase Storage)
 - [ ] Negociar el importe por candidato — hoy se hereda de la campaña
 - [ ] Que la marca pueda rechazar a un candidato — hoy solo puede aceptarlo
+- [ ] Borrar de Storage los ficheros de una colaboración eliminada
 - [ ] Pagos y comisión con Stripe
 - [ ] Briefs generados con IA
 - [ ] Detección de seguidores falsos
