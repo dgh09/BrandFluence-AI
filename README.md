@@ -43,7 +43,8 @@ Lo que ya funciona, recorrido entero en el navegador contra una base de datos y 
 | ✅ | **Entregables y cierre de la colaboración** |
 | ✅ | **Métricas de rendimiento reportadas por el creador** |
 | ✅ | **Subida de imágenes y vídeo** a Supabase Storage |
-| 📋 | Pagos con Stripe, notificaciones por email |
+| ✅ | **Registro del pago**, declarado por las dos partes |
+| 📋 | Pasarela de pago (Wompi o Mercado Pago), notificaciones |
 | 📋 | Apps nativas iOS y Android (Expo) |
 
 ---
@@ -213,6 +214,40 @@ Cinco cifras y un porcentaje **no son un gráfico**, son una fila de tiles. Un d
 
 ---
 
+## El pago: por qué la plataforma no toca el dinero
+
+BrandFluence **no cobra, no retiene y no transfiere**. El pago ocurre fuera y aquí solo queda el registro de lo que declara cada parte:
+
+```
+pendiente ──la marca: "he pagado"──> en curso ──el creador: "lo he recibido"──> pagada
+```
+
+Son tres decisiones encadenadas, y la primera es legal, no técnica.
+
+**No manejamos plata ajena.** En Colombia, retener fondos de terceros puede caer en el terreno de la captación de recursos y en el ámbito de la Superintendencia Financiera. El día que entre una pasarela, el diseño correcto es que ella haga el reparto y disperse al creador; que el saldo nunca se quede esperando en una cuenta nuestra. Esto condiciona el código, así que está escrito aquí y no solo en la cabeza de alguien. *(No es asesoría legal: hay que validarlo con un abogado antes de mover dinero real.)*
+
+**Nadie declara por el otro.** La marca no puede marcar la colaboración como cobrada, porque eso sería afirmar que el creador recibió un dinero que solo él puede confirmar. La regla vive en el `WHERE`, con el estado de origen exigido para que no se salte ningún paso:
+
+```sql
+AND (
+  (b.user_id  = $1 AND $3 = 'processing' AND co.payment_status = 'pending')
+  OR (b.user_id  = $1 AND $3 = 'pending'    AND co.payment_status = 'processing')
+  OR (cr.user_id = $1 AND $3 = 'completed'  AND co.payment_status = 'processing')
+)
+```
+
+**"En curso" no significa "pagada".** Significa que una de las dos partes lo dice. La pantalla lo enseña como dos casillas separadas, con quién afirmó cada una y cuándo, en vez de dar el pago por bueno cuando solo lo ha dicho quien paga.
+
+Rectificar se puede, pero solo antes de que el otro confirme, y **borra todo el rastro**: fecha, método y referencia. Un método de pago sin pago sería un registro mintiendo.
+
+### Detalles que salen de que esto es Colombia
+
+Los métodos son `transferencia`, `nequi`, `daviplata`, `efectivo` y `otro`. Una lista pensada para Europa —"tarjeta, PayPal"— dejaría a casi todo el mundo eligiendo "otro": aquí Nequi y Daviplata mueven más dinero entre particulares que las tarjetas. Va como vocabulario cerrado con `CHECK` en la base, para poder agrupar por método el día que haya que conciliar sin normalizar cadenas a mano.
+
+Y por eso **Stripe no era una opción**: Colombia no está entre sus países soportados, y el único camino sería constituir una sociedad fuera —con su contabilidad y sus impuestos en dos sitios— para acabar sin PSE ni Nequi, que es justo como paga la mayoría. Cuando toque cobrar de verdad, los candidatos son Wompi (Bancolombia) o Mercado Pago, que tienen reparto de pago y dispersión a cuentas colombianas. `paid_at` y `payment_reference` son los campos que habrá que casar entonces.
+
+---
+
 ## Subida de ficheros
 
 Fotos de perfil, logos y el contenido entregado. **Los bytes no pasan por esta app.**
@@ -346,7 +381,7 @@ El script imprime las credenciales de acceso al terminar.
 ### Tests
 
 ```
-✓ 42 consultas revisadas, todas cuadran
+✓ 44 consultas revisadas, todas cuadran
 # tests 47
 # pass 47
 # fail 0
@@ -395,7 +430,10 @@ src/
    └─ auth.ts          configuración de NextAuth
 database/
    schema.sql · reset.sql
+   migrations/   cambios sobre un esquema ya aplicado
 ```
+
+`schema.sql` es para instalaciones nuevas y **no** es idempotente. Sobre una base que ya existe van las de `migrations/`, que sí lo son (`IF NOT EXISTS`) y se pueden lanzar dos veces sin romper nada. Toda migración se refleja también en `schema.sql`, para que quien empiece de cero no herede una deuda.
 
 **Toda la lógica de negocio vive en `/api/*`, nunca en Server Components.** No es casualidad: cuando lleguen las apps de iOS y Android consumirán exactamente los mismos endpoints, sin reescribir nada.
 
@@ -432,8 +470,9 @@ Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native n
 - [x] Subida de imágenes y vídeo (Supabase Storage)
 - [ ] Negociar el importe por candidato — hoy se hereda de la campaña
 - [ ] Que la marca pueda rechazar a un candidato — hoy solo puede aceptarlo
+- [x] Registro del pago declarado por las dos partes
 - [ ] Borrar de Storage los ficheros de una colaboración eliminada
-- [ ] Pagos y comisión con Stripe
+- [ ] Cobro real con pasarela (Wompi o Mercado Pago) y comisión
 - [ ] Briefs generados con IA
 - [ ] Detección de seguidores falsos
 - [ ] Apps nativas iOS y Android con Expo

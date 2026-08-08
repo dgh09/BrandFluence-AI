@@ -10,6 +10,7 @@ import type {
   DeliverablePatchInput,
   DeliverablesInput,
   MediaRef,
+  PaymentDeclarationInput,
   PerformanceMetricsInput,
 } from "@/lib/validators";
 
@@ -48,11 +49,22 @@ export interface CollaborationRow {
   deliverablesTotal: number;
 }
 
+export interface PaymentInfo {
+  status: string;
+  method: string | null;
+  reference: string | null;
+  /** Cuándo declaró la marca que pagó. */
+  paidAt: string | null;
+  /** Cuándo confirmó el creador que lo recibió. */
+  confirmedAt: string | null;
+}
+
 export interface CollaborationDetail extends CollaborationRow {
   campaignDescription: string | null;
   deliverables: Deliverable[];
   /** null mientras el creador no haya reportado nada. */
   metrics: PerformanceMetrics | null;
+  payment: PaymentInfo;
   /** Qué papel juega quien está mirando. Decide qué acciones se ofrecen. */
   viewerRole: ViewerRole;
   createdAt: string;
@@ -188,12 +200,18 @@ export async function getCollaboration(
       campaign_description: string | null;
       deliverables: unknown;
       performance_metrics: unknown;
+      payment_method: string | null;
+      payment_reference: string | null;
+      paid_at: Date | null;
+      payment_confirmed_at: Date | null;
       viewer_role: ViewerRole;
       created_at: Date;
     }
   >(
     `SELECT co.id, co.status, co.payment_status, co.agreed_amount,
             co.deliverables, co.performance_metrics, co.created_at,
+            co.payment_method, co.payment_reference,
+            co.paid_at, co.payment_confirmed_at,
             c.title AS campaign_title,
             c.description AS campaign_description,
             CASE WHEN b.user_id = $1 THEN cr.username ELSE b.company_name END
@@ -218,8 +236,98 @@ export async function getCollaboration(
     campaignDescription: row.campaign_description,
     deliverables: parseDeliverables(row.deliverables),
     metrics: parseMetrics(row.performance_metrics),
+    payment: {
+      status: row.payment_status,
+      method: row.payment_method,
+      reference: row.payment_reference,
+      paidAt: row.paid_at?.toISOString() ?? null,
+      confirmedAt: row.payment_confirmed_at?.toISOString() ?? null,
+    },
     viewerRole: row.viewer_role,
     createdAt: row.created_at.toISOString(),
+  };
+}
+
+/**
+ * Registra lo que una de las partes declara sobre el pago.
+ *
+ * BrandFluence **no mueve dinero**. En Colombia, retener fondos de terceros
+ * puede caer en el terreno de la captación de recursos y en el ámbito de la
+ * Superintendencia Financiera; aquí la plataforma solo anota lo que cada
+ * parte dice de un pago que ocurre fuera.
+ *
+ * Por eso cada rol declara únicamente su mitad, y eso vive en el WHERE:
+ *
+ *   · la marca:    pending    → processing  ("he pagado")
+ *   · el creador:  processing → completed   ("lo he recibido")
+ *   · la marca:    processing → pending     (rectificar, solo si el creador
+ *                                            no ha confirmado todavía)
+ *
+ * El estado de origen se exige explícitamente para que las transiciones no
+ * se puedan saltar: una marca no puede marcar `completed` por su cuenta, que
+ * sería declarar por el creador que ha cobrado.
+ */
+export async function declarePayment(
+  userId: string,
+  collaborationId: string,
+  input: PaymentDeclarationInput,
+): Promise<PaymentInfo | null> {
+  const row = await queryOne<{
+    payment_status: string;
+    payment_method: string | null;
+    payment_reference: string | null;
+    paid_at: Date | null;
+    payment_confirmed_at: Date | null;
+  }>(
+    `UPDATE collaborations co
+        SET payment_status = $3,
+            -- Los sellos los pone el servidor, no el cliente: son la única
+            -- parte del registro que no es "lo que alguien dice".
+            paid_at = CASE WHEN $3 = 'processing' THEN now()
+                           WHEN $3 = 'pending'    THEN NULL
+                           ELSE co.paid_at END,
+            payment_method    = CASE WHEN $3 = 'processing' THEN $4::text
+                                     WHEN $3 = 'pending'    THEN NULL
+                                     ELSE co.payment_method END,
+            payment_reference = CASE WHEN $3 = 'processing' THEN $5::text
+                                     WHEN $3 = 'pending'    THEN NULL
+                                     ELSE co.payment_reference END,
+            payment_confirmed_at = CASE WHEN $3 = 'completed' THEN now()
+                                        ELSE NULL END
+       FROM matches   m
+       JOIN creators  cr ON cr.id = m.creator_id
+       JOIN campaigns c  ON c.id  = m.campaign_id
+       JOIN brands    b  ON b.id  = c.brand_id
+      WHERE co.match_id = m.id
+        AND co.id = $2
+        AND co.status <> 'cancelled'
+        AND (
+          -- La marca declara el pago, o rectifica mientras no le hayan
+          -- confirmado la recepción.
+          (b.user_id = $1 AND $3 = 'processing' AND co.payment_status = 'pending')
+          OR (b.user_id = $1 AND $3 = 'pending' AND co.payment_status = 'processing')
+          -- El creador confirma que lo recibió.
+          OR (cr.user_id = $1 AND $3 = 'completed' AND co.payment_status = 'processing')
+        )
+      RETURNING co.payment_status, co.payment_method, co.payment_reference,
+                co.paid_at, co.payment_confirmed_at`,
+    [
+      userId,
+      collaborationId,
+      input.status,
+      input.method ?? null,
+      input.reference || null,
+    ],
+  );
+
+  if (!row) return null;
+
+  return {
+    status: row.payment_status,
+    method: row.payment_method,
+    reference: row.payment_reference,
+    paidAt: row.paid_at?.toISOString() ?? null,
+    confirmedAt: row.payment_confirmed_at?.toISOString() ?? null,
   };
 }
 

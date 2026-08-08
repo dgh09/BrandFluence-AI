@@ -5,6 +5,7 @@ import { ChevronLeft } from "lucide-react";
 
 import { CloseActions } from "@/components/collaborations/CloseActions";
 import { Deliverables } from "@/components/collaborations/Deliverables";
+import { PaymentPanel } from "@/components/collaborations/PaymentPanel";
 import { PerformanceMetrics } from "@/components/collaborations/PerformanceMetrics";
 import {
   PAYMENT_LABEL,
@@ -91,6 +92,18 @@ export default async function CollaborationPage({
             {PAYMENT_LABEL[collaboration.paymentStatus] ??
               collaboration.paymentStatus}
           </span>
+        </Card>
+
+        {/* En una cancelada se sigue viendo lo que se declaró, pero ya no se
+            declara nada nuevo. */}
+        <Card>
+          <PaymentPanel
+            collaborationId={collaboration.id}
+            initial={collaboration.payment}
+            amount={collaboration.agreedAmount}
+            role={collaboration.viewerRole}
+            editable={collaboration.status !== "cancelled"}
+          />
         </Card>
 
         {collaboration.campaignDescription ? (

@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 import { INTERACTION_KEYS } from "./metrics";
-import { INDUSTRY_VALUES, NICHE_VALUES } from "./taxonomy";
+import {
+  INDUSTRY_VALUES,
+  NICHE_VALUES,
+  PAYMENT_METHOD_VALUES,
+} from "./taxonomy";
 import { UPLOAD_PURPOSES } from "./uploads";
 
 /**
@@ -153,6 +157,27 @@ export const deliverablePatchSchema = z
     message: "No hay nada que cambiar",
   });
 
+/**
+ * Declaración sobre un pago que ocurre FUERA de la plataforma.
+ *
+ * Cada parte declara su mitad y nada más: la marca dice que pagó
+ * (`processing`), el creador dice que lo recibió (`completed`). Volver a
+ * `pending` es rectificar, y solo tiene sentido antes de que el otro
+ * confirme.
+ *
+ * El método y la referencia solo acompañan a la declaración de la marca; el
+ * creador no describe un pago que no hizo.
+ */
+export const paymentDeclarationSchema = z
+  .object({
+    status: z.enum(["pending", "processing", "completed"]),
+    method: z.enum(PAYMENT_METHOD_VALUES).optional(),
+    reference: z.string().trim().max(120).optional(),
+  })
+  .refine((p) => p.status === "processing" || !p.method, {
+    message: "El método solo se indica al declarar el pago",
+  });
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreatorProfileInput = z.infer<typeof creatorProfileSchema>;
@@ -163,4 +188,5 @@ export type PerformanceMetricsInput = z.infer<typeof performanceMetricsSchema>;
 export type UploadRequestInput = z.infer<typeof uploadRequestSchema>;
 export type MediaRef = z.infer<typeof mediaRefSchema>;
 export type DeliverablePatchInput = z.infer<typeof deliverablePatchSchema>;
+export type PaymentDeclarationInput = z.infer<typeof paymentDeclarationSchema>;
 export type CollaborationStatusInput = z.infer<typeof collaborationStatusSchema>;

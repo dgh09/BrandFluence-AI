@@ -46,8 +46,27 @@ export const INDUSTRIES = [
   { value: "entretenimiento", label: "Entretenimiento" },
 ] as const;
 
+/**
+ * Cómo se pagó, fuera de la plataforma.
+ *
+ * La lista es de Colombia a propósito: aquí Nequi y Daviplata mueven más
+ * dinero entre particulares que las tarjetas, y una lista pensada para
+ * Europa —"tarjeta, PayPal"— dejaría a casi todo el mundo eligiendo "otro".
+ *
+ * Vocabulario cerrado y no texto libre, para que el día que se concilie con
+ * una pasarela se pueda agrupar por método sin normalizar cadenas a mano.
+ */
+export const PAYMENT_METHODS = [
+  { value: "transferencia", label: "Transferencia bancaria" },
+  { value: "nequi", label: "Nequi" },
+  { value: "daviplata", label: "Daviplata" },
+  { value: "efectivo", label: "Efectivo" },
+  { value: "otro", label: "Otro" },
+] as const;
+
 export type NicheValue = (typeof NICHES)[number]["value"];
 export type IndustryValue = (typeof INDUSTRIES)[number]["value"];
+export type PaymentMethodValue = (typeof PAYMENT_METHODS)[number]["value"];
 
 export const NICHE_VALUES = NICHES.map((n) => n.value) as [NicheValue, ...NicheValue[]];
 export const INDUSTRY_VALUES = INDUSTRIES.map((i) => i.value) as [
@@ -61,4 +80,13 @@ export function nicheLabel(value: string | null): string | null {
 
 export function industryLabel(value: string | null): string | null {
   return INDUSTRIES.find((i) => i.value === value)?.label ?? value;
+}
+
+export const PAYMENT_METHOD_VALUES = PAYMENT_METHODS.map((m) => m.value) as [
+  PaymentMethodValue,
+  ...PaymentMethodValue[],
+];
+
+export function paymentMethodLabel(value: string | null): string | null {
+  return PAYMENT_METHODS.find((m) => m.value === value)?.label ?? value;
 }

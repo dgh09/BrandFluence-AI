@@ -155,11 +155,24 @@ CREATE TABLE collaborations (
   deliverables        JSONB,
   performance_metrics JSONB,
   agreed_amount       DECIMAL(10,2),
+
+  -- El pago ocurre FUERA de la plataforma y cada parte declara su mitad:
+  -- la marca dice que pagó ('processing'), el creador confirma que lo
+  -- recibió ('completed'). BrandFluence no mueve ni retiene dinero.
   payment_status      TEXT NOT NULL DEFAULT 'pending'
                       CHECK (payment_status IN ('pending', 'processing', 'completed')),
+  paid_at             TIMESTAMPTZ,
+  payment_method      TEXT
+                      CHECK (payment_method IS NULL OR payment_method IN
+                             ('transferencia', 'nequi', 'daviplata', 'efectivo', 'otro')),
+  payment_reference   TEXT,
+  payment_confirmed_at TIMESTAMPTZ,
+
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE INDEX idx_collaborations_payment ON collaborations(payment_status);
 
 -- ============================================================================
 -- 4. ANALYTICS Y FRAUDE
