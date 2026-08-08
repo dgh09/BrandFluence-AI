@@ -6,17 +6,12 @@ import { CampaignForm } from "@/components/campaigns/CampaignForm";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { auth } from "@/lib/auth";
+import { formatCOP } from "@/lib/currency";
 import { listBrandCampaigns } from "@/lib/queries/campaigns";
 import { nicheLabel } from "@/lib/taxonomy";
 
 export const metadata: Metadata = { title: "Campañas" };
 export const dynamic = "force-dynamic";
-
-const currency = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 export default async function CampaignsPage() {
   const session = await auth();
@@ -70,7 +65,7 @@ export default async function CampaignsPage() {
                 </span>
                 {campaign.budget !== null ? (
                   <span className="tabular font-bold">
-                    {currency.format(campaign.budget)}
+                    {formatCOP(campaign.budget)}
                   </span>
                 ) : null}
               </div>

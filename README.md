@@ -8,7 +8,7 @@ Matching con IA para campañas UGC.
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
-[![Tests](https://img.shields.io/badge/tests-47%20passing-2FA898)](#tests)
+[![Tests](https://img.shields.io/badge/tests-53%20passing-2FA898)](#tests)
 [![Estado](https://img.shields.io/badge/estado-MVP%20en%20desarrollo-FF3B4F)](#estado-del-proyecto)
 
 </div>
@@ -240,6 +240,18 @@ AND (
 
 Rectificar se puede, pero solo antes de que el otro confirme, y **borra todo el rastro**: fecha, método y referencia. Un método de pago sin pago sería un registro mintiendo.
 
+### Los importes están en pesos, y eso no es solo una etiqueta
+
+Todo se guarda y se muestra en **COP**. Cambiar la moneda arrastró tres cosas que no se ven en la pantalla:
+
+**Las columnas se quedaban cortas.** Un peso vale unas 4.000 veces menos que un euro, así que las mismas cantidades pasan a tener cuatro dígitos más. `DECIMAL(10,2)` topa en 99.999.999 —unos 24.000 USD—, que el presupuesto mensual de una marca mediana desborda con facilidad. Y Postgres no trunca: da error `22003` y la operación falla. Ampliadas a `DECIMAL(14,2)` en la migración 002.
+
+**El símbolo se pone a mano.** Pedirle a `Intl` el formato de moneda completo devuelve `$` + **U+00A0** + la cifra, y ese espacio duro depende de la versión de ICU: la de Node y la del navegador no tienen por qué coincidir. Como los importes se pintan en componentes cliente, una diferencia ahí rompe la hidratación. De `Intl` sale solo el agrupado de miles, que sí es estable.
+
+**Había siete copias del formateador** repartidas por pantallas y componentes: siete sitios donde cambiar la moneda y siete oportunidades de que uno se quedara atrás. Ahora es uno, `src/lib/currency.ts`, con sus tests.
+
+En casi toda la interfaz basta `$2.500.000`, porque el contexto ya es colombiano. En el panel de pago se escribe `$2.500.000 COP`: ahí el importe **es** el asunto, y confundirlo con dólares saldría caro.
+
 ### Detalles que salen de que esto es Colombia
 
 Los métodos son `transferencia`, `nequi`, `daviplata`, `efectivo` y `otro`. Una lista pensada para Europa —"tarjeta, PayPal"— dejaría a casi todo el mundo eligiendo "otro": aquí Nequi y Daviplata mueven más dinero entre particulares que las tarjetas. Va como vocabulario cerrado con `CHECK` en la base, para poder agrupar por método el día que haya que conciliar sin normalizar cadenas a mano.
@@ -382,8 +394,8 @@ El script imprime las credenciales de acceso al terminar.
 
 ```
 ✓ 44 consultas revisadas, todas cuadran
-# tests 47
-# pass 47
+# tests 53
+# pass 53
 # fail 0
 ```
 
@@ -421,6 +433,7 @@ src/
    ├─ matching.test.ts ← sus 19 tests
    ├─ metrics.ts       ← engagement derivado (función pura)
    ├─ metrics.test.ts  ← sus 12 tests
+   ├─ currency.ts      ← importes en pesos (pura)
    ├─ uploads.ts       ← reglas de subida (pura, vale en el navegador)
    ├─ uploads.test.ts  ← sus 16 tests
    ├─ storage.ts       ← Supabase Storage (solo servidor)

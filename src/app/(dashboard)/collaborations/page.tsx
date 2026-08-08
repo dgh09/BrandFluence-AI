@@ -10,6 +10,7 @@ import {
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { auth } from "@/lib/auth";
+import { formatCOP } from "@/lib/currency";
 import {
   listBrandCollaborations,
   listCreatorCollaborations,
@@ -17,12 +18,6 @@ import {
 
 export const metadata: Metadata = { title: "Colaboraciones" };
 export const dynamic = "force-dynamic";
-
-const currency = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 export default async function CollaborationsPage() {
   const session = await auth();
@@ -94,7 +89,7 @@ export default async function CollaborationsPage() {
                     <span className="flex items-center gap-1">
                       {collab.agreedAmount !== null ? (
                         <span className="tabular font-bold">
-                          {currency.format(collab.agreedAmount)}
+                          {formatCOP(collab.agreedAmount)}
                         </span>
                       ) : null}
                       <ChevronRight

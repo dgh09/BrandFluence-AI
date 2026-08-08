@@ -6,14 +6,9 @@ import { Check, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { formatCOP } from "@/lib/currency";
 import { matchScoreColor } from "@/lib/design-tokens";
 import type { MatchRow } from "@/lib/queries/dashboard";
-
-const currency = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 const STATUS_LABEL: Record<string, string> = {
   interested: "Aplicada",
@@ -67,7 +62,7 @@ export function MatchCard({ match }: { match: MatchRow }) {
           <p className="mt-0.5 truncate text-sm text-ink-secondary">
             {match.brandName ?? "Marca"}
             {match.campaignBudget !== null
-              ? ` · ${currency.format(match.campaignBudget)}`
+              ? ` · ${formatCOP(match.campaignBudget)}`
               : ""}
           </p>
         </div>

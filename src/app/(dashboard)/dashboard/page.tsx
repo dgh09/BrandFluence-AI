@@ -9,18 +9,13 @@ import { Card, StatTile } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ScoreRing } from "@/components/ui/ScoreRing";
 import { auth } from "@/lib/auth";
+import { formatCOP } from "@/lib/currency";
 import { getBrandDashboard, getCreatorDashboard } from "@/lib/queries/dashboard";
 
 export const metadata: Metadata = { title: "Inicio" };
 
 // Los datos cambian con cada match: nada que cachear.
 export const dynamic = "force-dynamic";
-
-const currency = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -167,7 +162,7 @@ async function BrandView({ userId }: { userId: string }) {
 
       <StatTile
         label="Presupuesto en campañas activas"
-        value={currency.format(data.totalBudget)}
+        value={formatCOP(data.totalBudget)}
         hint={data.industry ? `Sector: ${data.industry}` : undefined}
       />
 
@@ -186,7 +181,7 @@ async function BrandView({ userId }: { userId: string }) {
                     {campaign.candidates} candidato
                     {campaign.candidates === 1 ? "" : "s"}
                     {campaign.budget !== null
-                      ? ` · ${currency.format(campaign.budget)}`
+                      ? ` · ${formatCOP(campaign.budget)}`
                       : ""}
                   </p>
                 </div>

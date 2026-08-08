@@ -101,7 +101,7 @@ CREATE TABLE brands (
   company_name   VARCHAR(255),
   industry       VARCHAR(100),
   logo_url       TEXT,
-  monthly_budget DECIMAL(10,2),
+  monthly_budget DECIMAL(14,2),   -- pesos colombianos: 4 dígitos más que en euros
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -120,7 +120,7 @@ CREATE TABLE campaigns (
   objective     VARCHAR(100),
   target_niche  VARCHAR(100),      -- contra qué se matchea creators.niche
   min_followers INT DEFAULT 0,     -- requisito mínimo de audiencia
-  budget        DECIMAL(10,2),
+  budget        DECIMAL(14,2),
   status        TEXT NOT NULL DEFAULT 'draft'
                 CHECK (status IN ('draft', 'published', 'active', 'completed')),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -154,7 +154,7 @@ CREATE TABLE collaborations (
                       CHECK (status IN ('active', 'completed', 'cancelled')),
   deliverables        JSONB,
   performance_metrics JSONB,
-  agreed_amount       DECIMAL(10,2),
+  agreed_amount       DECIMAL(14,2),
 
   -- El pago ocurre FUERA de la plataforma y cada parte declara su mitad:
   -- la marca dice que pagó ('processing'), el creador confirma que lo

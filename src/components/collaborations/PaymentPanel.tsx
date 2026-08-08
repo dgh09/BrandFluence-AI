@@ -7,14 +7,9 @@ import { BadgeCheck, HandCoins, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { formatCOPExplicit } from "@/lib/currency";
 import type { PaymentInfo, ViewerRole } from "@/lib/queries/collaborations";
 import { PAYMENT_METHODS, paymentMethodLabel } from "@/lib/taxonomy";
-
-const currency = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 /**
  * Solo fecha, sin hora, y a propósito.
@@ -106,8 +101,12 @@ export function PaymentPanel({
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="font-bold">Pago</h2>
+        {/* Aquí sí se dice la moneda: es la cifra que alguien va a transferir
+            de verdad, y "$" a secas se confunde con dólares. */}
         {amount !== null ? (
-          <span className="tabular text-sm font-bold">{currency.format(amount)}</span>
+          <span className="tabular text-sm font-bold">
+            {formatCOPExplicit(amount)}
+          </span>
         ) : null}
       </div>
 

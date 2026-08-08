@@ -60,15 +60,15 @@ const { rows: [brandUser] } = await client.query(
 );
 const { rows: [brand] } = await client.query(
   `INSERT INTO brands (user_id, company_name, industry, monthly_budget)
-   VALUES ($1, 'Ironpeak Fitness', 'deporte', 12000) RETURNING id`,
+   VALUES ($1, 'Ironpeak Fitness', 'deporte', 12000000) RETURNING id`,
   [brandUser.id],
 );
 
 // --- Campañas + matches ----------------------------------------------------
 const campaigns = [
-  ["Lanzamiento proteína vegana", "fitness", 2500, 10000, 92.5],
-  ["Reto 30 días en casa", "fitness", 1800, 20000, 78.0],
-  ["Colección ropa técnica SS26", "moda", 3200, 50000, 41.0],
+  ["Lanzamiento proteína vegana", "fitness", 2500000, 10000, 92.5],
+  ["Reto 30 días en casa", "fitness", 1800000, 20000, 78.0],
+  ["Colección ropa técnica SS26", "moda", 3200000, 50000, 41.0],
 ];
 
 for (const [title, niche, budget, minFollowers, score] of campaigns) {

@@ -13,16 +13,11 @@ import {
 } from "@/components/collaborations/StatusBadge";
 import { Card } from "@/components/ui/Card";
 import { auth } from "@/lib/auth";
+import { formatCOP } from "@/lib/currency";
 import { getCollaboration } from "@/lib/queries/collaborations";
 
 export const metadata: Metadata = { title: "Colaboración" };
 export const dynamic = "force-dynamic";
-
-const currency = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 const dateFormat = new Intl.DateTimeFormat("es-ES", {
   day: "numeric",
@@ -84,7 +79,7 @@ export default async function CollaborationPage({
             </p>
             <p className="tabular mt-1 text-2xl font-bold leading-none">
               {collaboration.agreedAmount !== null
-                ? currency.format(collaboration.agreedAmount)
+                ? formatCOP(collaboration.agreedAmount)
                 : "—"}
             </p>
           </div>

@@ -6,15 +6,10 @@ import { Handshake } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { formatCOP } from "@/lib/currency";
 import { matchScoreColor } from "@/lib/design-tokens";
 import type { CandidateRow } from "@/lib/queries/matches";
 import { nicheLabel } from "@/lib/taxonomy";
-
-const currency = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 0,
-});
 
 /**
  * Candidato visto por la marca, con la acción de aceptarlo.
@@ -102,7 +97,7 @@ export function CandidateCard({ candidate }: { candidate: CandidateRow }) {
         >
           <span>Colaboración abierta</span>
           {amount !== null ? (
-            <span className="tabular font-bold">{currency.format(amount)}</span>
+            <span className="tabular font-bold">{formatCOP(amount)}</span>
           ) : null}
         </p>
       ) : (
@@ -116,7 +111,7 @@ export function CandidateCard({ candidate }: { candidate: CandidateRow }) {
           {pending
             ? "…"
             : candidate.campaignBudget !== null
-              ? `Aceptar por ${currency.format(candidate.campaignBudget)}`
+              ? `Aceptar por ${formatCOP(candidate.campaignBudget)}`
               : "Aceptar candidato"}
         </Button>
       )}
