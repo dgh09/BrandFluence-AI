@@ -102,7 +102,11 @@ export async function updateCreatorProfile(
               bio = $3,
               niche = $4,
               follower_count = $5,
-              engagement_rate = $6
+              engagement_rate = $6,
+              -- COALESCE y no asignación directa: el formulario solo manda
+              -- la foto cuando se acaba de subir una. Sin esto, guardar
+              -- cualquier otro campo borraría la que ya hubiera.
+              profile_image_url = coalesce($7, profile_image_url)
         WHERE user_id = $1
         RETURNING id`,
       [
@@ -112,6 +116,7 @@ export async function updateCreatorProfile(
         input.niche,
         input.followerCount,
         input.engagementRate ?? null,
+        input.profileImageUrl ?? null,
       ],
     );
 
@@ -140,10 +145,19 @@ export async function updateBrandProfile(
     `UPDATE brands
         SET company_name = $2,
             industry = $3,
-            monthly_budget = $4
+            monthly_budget = $4,
+            -- Mismo motivo que con la foto del creador: solo se pisa si
+            -- viene un logo nuevo.
+            logo_url = coalesce($5, logo_url)
       WHERE user_id = $1
       RETURNING id`,
-    [userId, input.companyName, input.industry, input.monthlyBudget ?? null],
+    [
+      userId,
+      input.companyName,
+      input.industry,
+      input.monthlyBudget ?? null,
+      input.logoUrl ?? null,
+    ],
   );
 
   if (!row) throw new Error("No existe perfil de marca para este usuario");

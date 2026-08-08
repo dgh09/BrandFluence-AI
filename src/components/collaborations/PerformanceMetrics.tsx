@@ -217,6 +217,10 @@ function MetricsForm({
               onChange={(event) =>
                 setValues((current) => ({ ...current, [key]: event.target.value }))
               }
+              // Mismo motivo que en el Input compartido: Chrome altera el
+              // número enfocado al pasar la rueda por encima, y estas cifras
+              // son las que la marca va a leer como resultado de su campaña.
+              onWheel={(event) => event.currentTarget.blur()}
               placeholder="—"
               className={[
                 "tabular h-11 rounded-tile bg-surface-2 px-3 text-base text-ink",

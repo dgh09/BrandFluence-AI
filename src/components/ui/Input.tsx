@@ -43,6 +43,16 @@ export function Input({
           className,
         ].join(" ")}
         {...props}
+        // Va DESPUÉS del spread para que no lo pise un onWheel de fuera.
+        onWheel={(event) => {
+          // Chrome le suma o resta al `number` que tenga el foco cuando la
+          // rueda pasa por encima. Quien baje por el formulario con el ratón
+          // sobre el campo cambia la cifra sin enterarse: aquí eso son los
+          // seguidores y el engagement, que alimentan el matching. Quitarle
+          // el foco desactiva ese comportamiento sin bloquear el scroll.
+          if (props.type === "number") event.currentTarget.blur();
+          props.onWheel?.(event);
+        }}
       />
 
       {error ? (
