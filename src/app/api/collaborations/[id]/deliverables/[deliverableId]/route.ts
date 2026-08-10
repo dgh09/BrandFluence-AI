@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { patchDeliverable } from "@/lib/queries/collaborations";
 import { deliverablePatchSchema } from "@/lib/validators";
+import { deliverableSubmitted } from "@/lib/notifications";
+import { collaborationParties, notify } from "@/lib/queries/notifications";
 
 /**
  * PATCH /api/collaborations/[id]/deliverables/[deliverableId]
@@ -61,6 +63,27 @@ export async function PATCH(
       { error: "Entregable no encontrado o colaboración cerrada" },
       { status: 404 },
     );
+  }
+
+  // Se entera la marca, pero **solo cuando hay algo que mirar**: marcar como
+  // hecho o adjuntar el fichero. Desmarcarse y quitar el adjunto son las
+  // operaciones inversas, y avisar de ellas convertiría la campana en ruido
+  // cada vez que el creador rectifica.
+  const worthTelling =
+    parsed.data.done === true || (parsed.data.media ?? null) !== null;
+
+  const parties = worthTelling ? await collaborationParties(id) : null;
+  if (parties) {
+    await notify([
+      {
+        userId: parties.brandUserId,
+        content: deliverableSubmitted({
+          collaborationId: id,
+          campaignTitle: parties.campaignTitle,
+          creatorUsername: parties.creatorUsername,
+        }),
+      },
+    ]);
   }
 
   return NextResponse.json({ deliverables });

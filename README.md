@@ -45,7 +45,8 @@ Lo que ya funciona, recorrido entero en el navegador contra una base de datos y 
 | ✅ | **Métricas de rendimiento reportadas por el creador** |
 | ✅ | **Subida de imágenes y vídeo** a Supabase Storage |
 | ✅ | **Registro del pago**, declarado por las dos partes |
-| 📋 | Pasarela de pago (Wompi o Mercado Pago), notificaciones |
+| ✅ | **Notificaciones in-app** con campana y contador |
+| 📋 | Pasarela de pago (Wompi o Mercado Pago) |
 | 📋 | Apps nativas iOS y Android (Expo) |
 
 ---
@@ -276,6 +277,75 @@ Y por eso **Stripe no era una opción**: Colombia no está entre sus países sop
 
 ---
 
+## Notificaciones: a quién hay que contárselo
+
+Casi ninguna acción del producto le interesa a quien la hace. El creador ya
+sabe que ha aplicado; quien necesita enterarse es la marca. Por eso las
+notificaciones son **una tabla aparte de `events`**, y la diferencia cabe en
+una línea:
+
+| | `events` | `notifications` |
+|---|---|---|
+| `user_id` es… | quien **actúa** | quien **recibe** |
+| Para qué | analítica | avisar a una persona |
+| Si se pierde una | no lo nota nadie | alguien no se entera de que le aceptaron |
+
+Esa última fila decide cómo se escriben. El `INSERT` de `events` va sin
+`await` —es fuego y olvido—, pero el de las notificaciones se espera: en
+serverless una promesa suelta puede morir cuando la función termina. Lo que
+**no** hace es lanzar. Cuando se llega a ese punto la acción del usuario ya
+está guardada, así que un 500 le diría que falló algo que funcionó, y le
+invitaría a repetirlo.
+
+### El texto se guarda, no se recompone al leer
+
+Un aviso cuenta lo que pasó **cuando pasó**. Si la marca renombra la campaña
+mañana, «Te aceptaron en «Proteína vegana»» sigue siendo lo que ocurrió;
+recomponerlo al leer reescribiría el pasado. Y evita un JOIN polimórfico:
+match, colaboración y entregable tienen formas distintas, y ese es justo el
+sitio donde acaban apareciendo los `null`.
+
+Todo el copy vive en `src/lib/notifications.ts`, un módulo puro y testeado,
+para que cambiar cómo se lee un aviso no obligue a abrir seis rutas de API.
+
+### Avisar dos veces es peor que no avisar
+
+Aceptar y rechazar son idempotentes ante el doble clic —está hecho a
+propósito, para que el segundo clic no devuelva un 404 confuso—. Eso, sin
+más, manda **dos avisos idénticos**. Así que las dos consultas dicen ahora si
+hubo cambio real:
+
+- `acceptCandidate` devuelve `(xmax = 0) AS created`. En una fila recién
+  insertada `xmax` vale 0; en la que sale por la rama `DO UPDATE`, no. Es la
+  forma estándar de distinguir INSERT de UPDATE en un upsert sin una segunda
+  consulta.
+- `declineCandidate` lee el estado previo con una CTE, que ve la instantánea
+  anterior al `UPDATE`.
+
+Tampoco avisan las operaciones inversas: desmarcar un entregable, quitar un
+adjunto, vaciar la lista o rectificar un pago declarado. Son rectificaciones,
+y convertirlas en aviso llenaría la campana de ruido.
+
+### El contador y el App Router
+
+La campana la pinta el layout del panel, que cuenta las no leídas contra un
+índice parcial. Y ahí hay un detalle que no se ve en los tipos ni en el SQL:
+**un layout no se vuelve a renderizar al navegar por cliente**. Sin más, leer
+los avisos los marcaba en la base pero la insignia seguía diciendo «3» el
+resto de la sesión. Por eso la página dispara un `router.refresh()` —una vez,
+y solo si de verdad marcó algo— que sí vuelve a pedir el árbol de servidor
+entero.
+
+Ese refresco trae su propia consecuencia: vuelve a pedir la lista, que ya
+sale leída, y el resaltado de lo nuevo se borraba solo justo en la pantalla
+que existe para verlo. La lista es un componente de cliente que **congela**
+en `useState` lo que estaba sin leer al abrir, porque `router.refresh()`
+conserva el estado del cliente.
+
+Las dos cosas salieron en el navegador, no antes.
+
+---
+
 ## Subida de ficheros
 
 Fotos de perfil, logos y el contenido entregado. **Los bytes no pasan por esta app.**
@@ -502,6 +572,8 @@ Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native n
 - [ ] Deshacer un rechazo — hoy `declined` es terminal y la tarjeta no vuelve a la bandeja
 - [x] Registro del pago declarado por las dos partes
 - [ ] Borrar de Storage los ficheros de una colaboración eliminada
+- [x] Notificaciones in-app
+- [ ] Avisar fuera de la app (email o push) — hoy hay que entrar para enterarse
 - [ ] Cobro real con pasarela (Wompi o Mercado Pago) y comisión
 - [ ] Briefs generados con IA
 - [ ] Detección de seguidores falsos

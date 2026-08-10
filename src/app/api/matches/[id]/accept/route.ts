@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { acceptCandidate } from "@/lib/queries/matches";
+import { matchAccepted } from "@/lib/notifications";
+import { collaborationParties, notify } from "@/lib/queries/notifications";
 
 /**
  * POST /api/matches/[id]/accept — la marca acepta a un candidato.
@@ -41,6 +43,25 @@ export async function POST(
      VALUES ($1, 'match_accept', 'match', $2)`,
     [session.user.id, id],
   ).catch(() => {});
+
+  // Se entera el creador. Solo la primera vez: el segundo clic devuelve la
+  // colaboración que ya existía, y no ha pasado nada nuevo que contar.
+  const parties = collaboration.created
+    ? await collaborationParties(collaboration.id)
+    : null;
+  if (parties) {
+    await notify([
+      {
+        userId: parties.creatorUserId,
+        content: matchAccepted({
+          collaborationId: collaboration.id,
+          campaignTitle: parties.campaignTitle,
+          brandName: parties.brandName,
+          agreedAmount: collaboration.agreedAmount,
+        }),
+      },
+    ]);
+  }
 
   return NextResponse.json(collaboration, { status: 201 });
 }

@@ -195,6 +195,30 @@ CREATE TABLE events (
 CREATE INDEX idx_events_user_type ON events(user_id, event_type);
 CREATE INDEX idx_events_created   ON events(created_at DESC);
 
+-- Notificaciones in-app. Ojo a la diferencia con `events`: aquí `user_id` es
+-- el DESTINATARIO, no el actor. events dice quién hizo qué; notifications
+-- dice a quién hay que contárselo. El texto va guardado, no compuesto al
+-- leer, para que el aviso siga contando lo que pasó cuando pasó. Ver
+-- migrations/004.
+CREATE TABLE notifications (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type        TEXT NOT NULL,
+  title       TEXT NOT NULL,
+  body        TEXT,
+  href        TEXT,
+  entity_type VARCHAR(50),
+  entity_id   UUID,
+  read_at     TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Índice parcial: el contador de la campana se calcula en cada carga de
+-- página y solo mira las no leídas, que son las pocas.
+CREATE INDEX idx_notifications_unread ON notifications(user_id, created_at DESC)
+  WHERE read_at IS NULL;
+CREATE INDEX idx_notifications_user   ON notifications(user_id, created_at DESC);
+
 CREATE TABLE fraud_reports (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID REFERENCES users(id) ON DELETE CASCADE,

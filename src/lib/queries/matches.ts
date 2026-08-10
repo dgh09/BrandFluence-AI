@@ -91,6 +91,11 @@ export interface AcceptedCollaboration {
   status: string;
   paymentStatus: string;
   agreedAmount: number | null;
+  /**
+   * `true` solo la primera vez. Aceptar es idempotente ante el doble clic,
+   * y sin esta bandera el segundo clic mandaría un segundo «te aceptaron».
+   */
+  created: boolean;
 }
 
 /**
@@ -121,6 +126,7 @@ export async function acceptCandidate(
     status: string;
     payment_status: string;
     agreed_amount: string | null;
+    created: boolean;
   }>(
     `WITH accepted AS (
        UPDATE matches m
@@ -136,7 +142,8 @@ export async function acceptCandidate(
      INSERT INTO collaborations (match_id, agreed_amount)
      SELECT match_id, budget FROM accepted
      ON CONFLICT (match_id) DO UPDATE SET updated_at = now()
-     RETURNING id, status, payment_status, agreed_amount`,
+     RETURNING id, status, payment_status, agreed_amount,
+               (xmax = 0) AS created`,
     [userId, matchId],
   );
 
@@ -147,6 +154,11 @@ export async function acceptCandidate(
     status: row.status,
     paymentStatus: row.payment_status,
     agreedAmount: row.agreed_amount ? Number(row.agreed_amount) : null,
+    // `xmax` es el id de transacción que borró la versión de la fila; en una
+    // fila recién insertada vale 0, y en la que sale por la rama DO UPDATE
+    // no. Es la forma estándar de distinguir INSERT de UPDATE en un upsert
+    // sin una segunda consulta.
+    created: row.created,
   };
 }
 
@@ -163,23 +175,44 @@ export async function acceptCandidate(
  * hacer con los entregables y con el pago.
  *
  * 'declined' sí está, para que un doble clic devuelva 200 y no un 404.
+ *
+ * `changed` distingue el primer clic del segundo. La CTE lee el estado
+ * **antes** del UPDATE —ve la instantánea previa de la fila— y así se sabe
+ * si esta llamada rechazó de verdad o solo repitió lo ya hecho. Sin eso, un
+ * doble clic mandaría dos avisos idénticos al creador.
  */
 export async function declineCandidate(
   userId: string,
   matchId: string,
-): Promise<{ id: string; status: string } | null> {
-  return queryOne<{ id: string; status: string }>(
-    `UPDATE matches m
+): Promise<{ id: string; status: string; changed: boolean } | null> {
+  const row = await queryOne<{
+    id: string;
+    status: string;
+    previous_status: string;
+  }>(
+    `WITH prev AS (
+       SELECT id, status FROM matches WHERE id = $2
+     )
+     UPDATE matches m
         SET status = 'declined'
        FROM campaigns c
-       JOIN brands b ON b.id = c.brand_id
+       JOIN brands b ON b.id = c.brand_id, prev
       WHERE m.id = $2
+        AND prev.id = m.id
         AND c.id = m.campaign_id
         AND b.user_id = $1
         AND m.status IN ('interested', 'declined')
-      RETURNING m.id, m.status`,
+      RETURNING m.id, m.status, prev.status AS previous_status`,
     [userId, matchId],
   );
+
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    status: row.status,
+    changed: row.previous_status !== "declined",
+  };
 }
 
 export interface CandidateRow {

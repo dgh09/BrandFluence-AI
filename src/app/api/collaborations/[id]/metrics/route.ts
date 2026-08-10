@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { setPerformanceMetrics } from "@/lib/queries/collaborations";
 import { performanceMetricsSchema } from "@/lib/validators";
+import { metricsReported } from "@/lib/notifications";
+import { collaborationParties, notify } from "@/lib/queries/notifications";
 
 /**
  * PUT /api/collaborations/[id]/metrics — el creador reporta el rendimiento.
@@ -53,6 +55,23 @@ export async function PUT(
       { error: "Colaboración no encontrada o cancelada" },
       { status: 404 },
     );
+  }
+
+  // Se entera la marca. El PUT vacío borra el reporte, y borrar no es
+  // «publicar el rendimiento»: eso no se anuncia.
+  const reported = Object.keys(parsed.data).length > 0;
+  const parties = reported ? await collaborationParties(id) : null;
+  if (parties) {
+    await notify([
+      {
+        userId: parties.brandUserId,
+        content: metricsReported({
+          collaborationId: id,
+          campaignTitle: parties.campaignTitle,
+          creatorUsername: parties.creatorUsername,
+        }),
+      },
+    ]);
   }
 
   return NextResponse.json(result);

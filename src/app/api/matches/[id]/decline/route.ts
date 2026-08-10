@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { declineCandidate } from "@/lib/queries/matches";
+import { matchDeclined } from "@/lib/notifications";
+import { matchParties, notify } from "@/lib/queries/notifications";
 
 /**
  * POST /api/matches/[id]/decline — la marca rechaza a un candidato.
@@ -40,6 +42,21 @@ export async function POST(
      VALUES ($1, 'match_decline', 'match', $2)`,
     [session.user.id, id],
   ).catch(() => {});
+
+  // Se entera el creador, y solo si esta llamada rechazó de verdad.
+  const parties = updated.changed ? await matchParties(id) : null;
+  if (parties) {
+    await notify([
+      {
+        userId: parties.creatorUserId,
+        content: matchDeclined({
+          matchId: id,
+          campaignTitle: parties.campaignTitle,
+          brandName: parties.brandName,
+        }),
+      },
+    ]);
+  }
 
   return NextResponse.json(updated);
 }

@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { closeCollaboration } from "@/lib/queries/collaborations";
 import { collaborationStatusSchema } from "@/lib/validators";
+import { collaborationClosed } from "@/lib/notifications";
+import { collaborationParties, notify } from "@/lib/queries/notifications";
 
 /**
  * POST /api/collaborations/[id]/status — cierra la colaboración.
@@ -56,6 +58,30 @@ export async function POST(
      VALUES ($1, $2, 'collaboration', $3)`,
     [session.user.id, `collaboration_${updated.status}`, id],
   ).catch(() => {});
+
+  // Se entera quien NO cerró. Cuál de los dos es depende de quién sea el que
+  // ha llamado, y eso se resuelve comparando con las dos partes: aquí no
+  // filtramos por userType (ver la cabecera), así que no se puede deducir
+  // del rol de la sesión sin repetir la regla que ya vive en el WHERE.
+  const parties = await collaborationParties(id);
+  if (parties) {
+    const closedByBrand = parties.brandUserId === session.user.id;
+    await notify([
+      {
+        userId: closedByBrand ? parties.creatorUserId : parties.brandUserId,
+        content: collaborationClosed({
+          collaborationId: id,
+          campaignTitle: parties.campaignTitle,
+          status: updated.status as "completed" | "cancelled",
+          closedByName: closedByBrand
+            ? parties.brandName
+            : parties.creatorUsername
+              ? `@${parties.creatorUsername}`
+              : null,
+        }),
+      },
+    ]);
+  }
 
   return NextResponse.json(updated);
 }

@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { setDeliverables } from "@/lib/queries/collaborations";
 import { deliverablesSchema } from "@/lib/validators";
+import { deliverablesDefined } from "@/lib/notifications";
+import { collaborationParties, notify } from "@/lib/queries/notifications";
 
 /**
  * PUT /api/collaborations/[id]/deliverables — la marca fija la lista.
@@ -50,6 +52,23 @@ export async function PUT(
       { error: "Colaboración no encontrada o ya cerrada" },
       { status: 404 },
     );
+  }
+
+  // Se entera el creador: es él quien tiene que hacer lo que aparezca en esa
+  // lista. Vaciarla no avisa — no hay nada que ir a mirar.
+  const parties = deliverables.length > 0 ? await collaborationParties(id) : null;
+  if (parties) {
+    await notify([
+      {
+        userId: parties.creatorUserId,
+        content: deliverablesDefined({
+          collaborationId: id,
+          campaignTitle: parties.campaignTitle,
+          brandName: parties.brandName,
+          count: deliverables.length,
+        }),
+      },
+    ]);
   }
 
   return NextResponse.json({ deliverables });

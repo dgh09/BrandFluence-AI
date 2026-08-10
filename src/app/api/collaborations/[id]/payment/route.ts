@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { declarePayment } from "@/lib/queries/collaborations";
 import { query } from "@/lib/db";
 import { paymentDeclarationSchema } from "@/lib/validators";
+import { paymentConfirmed, paymentDeclared } from "@/lib/notifications";
+import { collaborationParties, notify } from "@/lib/queries/notifications";
 
 /**
  * POST /api/collaborations/[id]/payment
@@ -60,6 +62,36 @@ export async function POST(
      VALUES ($1, $2, 'collaboration', $3)`,
     [session.user.id, `payment_${payment.status}`, id],
   ).catch(() => {});
+
+  // Cada mitad de la declaración avisa a la otra parte. 'pending' es la
+  // marca rectificando su propia declaración: no hay nada que contarle a
+  // nadie, así que no genera aviso.
+  const parties =
+    payment.status === "pending" ? null : await collaborationParties(id);
+
+  if (parties) {
+    await notify([
+      payment.status === "processing"
+        ? {
+            userId: parties.creatorUserId,
+            content: paymentDeclared({
+              collaborationId: id,
+              campaignTitle: parties.campaignTitle,
+              brandName: parties.brandName,
+              amount: parties.agreedAmount,
+            }),
+          }
+        : {
+            userId: parties.brandUserId,
+            content: paymentConfirmed({
+              collaborationId: id,
+              campaignTitle: parties.campaignTitle,
+              creatorUsername: parties.creatorUsername,
+              amount: parties.agreedAmount,
+            }),
+          },
+    ]);
+  }
 
   return NextResponse.json(payment);
 }

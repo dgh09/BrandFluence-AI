@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { setMatchStatus } from "@/lib/queries/matches";
+import { matchApplied } from "@/lib/notifications";
+import { matchParties, notify } from "@/lib/queries/notifications";
 
 /** POST /api/matches/[id]/apply — el creador se postula a la campaña. */
 export async function POST(
@@ -34,6 +36,21 @@ export async function POST(
      VALUES ($1, 'match_apply', 'match', $2)`,
     [session.user.id, id],
   ).catch(() => {});
+
+  // Se entera la marca. notify() no lanza: la candidatura ya está guardada.
+  const parties = await matchParties(id);
+  if (parties) {
+    await notify([
+      {
+        userId: parties.brandUserId,
+        content: matchApplied({
+          matchId: id,
+          campaignTitle: parties.campaignTitle,
+          creatorUsername: parties.creatorUsername,
+        }),
+      },
+    ]);
+  }
 
   return NextResponse.json(updated);
 }
