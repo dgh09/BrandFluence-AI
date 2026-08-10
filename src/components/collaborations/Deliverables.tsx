@@ -6,6 +6,7 @@ import { Check, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { MediaUpload } from "@/components/ui/MediaUpload";
+import { shortDate } from "@/lib/dates";
 import type { Deliverable, ViewerRole } from "@/lib/queries/collaborations";
 import { isVideo } from "@/lib/uploads";
 
@@ -24,11 +25,6 @@ interface Draft {
   done: boolean;
   media: Deliverable["media"];
 }
-
-const dateFormat = new Intl.DateTimeFormat("es-ES", {
-  day: "numeric",
-  month: "short",
-});
 
 /**
  * El fichero entregado.
@@ -249,7 +245,7 @@ function CreatorChecklist({
                 </span>
                 {item.done && item.doneAt ? (
                   <span className="ml-auto shrink-0 text-xs text-ink-muted">
-                    {dateFormat.format(new Date(item.doneAt))}
+                    {shortDate(item.doneAt)}
                   </span>
                 ) : null}
               </label>

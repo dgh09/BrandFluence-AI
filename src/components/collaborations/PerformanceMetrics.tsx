@@ -12,6 +12,7 @@ import {
   type MetricKey,
   type PerformanceMetrics as Metrics,
 } from "@/lib/metrics";
+import { longDate } from "@/lib/dates";
 import type { ViewerRole } from "@/lib/queries/collaborations";
 
 const LABEL: Record<MetricKey, string> = {
@@ -26,10 +27,6 @@ const number = new Intl.NumberFormat("es-ES");
 const percent = new Intl.NumberFormat("es-ES", {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
-});
-const dateFormat = new Intl.DateTimeFormat("es-ES", {
-  day: "numeric",
-  month: "long",
 });
 
 interface Props {
@@ -86,7 +83,7 @@ export function PerformanceMetrics({
         <h2 className="font-bold">Rendimiento</h2>
         {metrics?.reportedAt ? (
           <span className="text-xs text-ink-muted">
-            Reportado el {dateFormat.format(new Date(metrics.reportedAt))}
+            Reportado el {longDate(metrics.reportedAt)}
           </span>
         ) : null}
       </div>

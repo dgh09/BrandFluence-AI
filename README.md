@@ -267,6 +267,8 @@ Todo se guarda y se muestra en **COP**. Cambiar la moneda arrastró tres cosas q
 
 **Había siete copias del formateador** repartidas por pantallas y componentes: siete sitios donde cambiar la moneda y siete oportunidades de que uno se quedara atrás. Ahora es uno, `src/lib/currency.ts`, con sus tests.
 
+Con las fechas pasaba lo mismo y se arregló igual, en `src/lib/dates.ts`. Había cuatro `Intl.DateTimeFormat` sueltos que **no eran cuatro copias**: eran tres formatos distintos —unos con año, otros sin— y todos en `es-ES`, que no es el locale del resto de la app. La diferencia se ve: con mes corto, España escribe «10 ago 2026» y Colombia «10 de ago de 2026». Ahora hay dos formatos con nombre, `longDate` y `shortDate`, los dos en `es-CO` y **los dos con año** —estas fechas se quedan escritas para siempre en la colaboración, y «10 de ago» es ambiguo dentro de catorce meses—. Ninguno lleva hora, por la misma razón de ICU que el símbolo del peso.
+
 En casi toda la interfaz basta `$2.500.000`, porque el contexto ya es colombiano. En el panel de pago se escribe `$2.500.000 COP`: ahí el importe **es** el asunto, y confundirlo con dólares saldría caro.
 
 ### Detalles que salen de que esto es Colombia
@@ -520,6 +522,9 @@ src/
    ├─ metrics.ts       ← engagement derivado (función pura)
    ├─ metrics.test.ts  ← sus 12 tests
    ├─ currency.ts      ← importes en pesos (pura)
+   ├─ dates.ts         ← fechas (pura)
+   ├─ dates.test.ts    ← sus 11 tests
+   ├─ notifications.ts ← el texto de los avisos (pura)
    ├─ uploads.ts       ← reglas de subida (pura, vale en el navegador)
    ├─ uploads.test.ts  ← sus 16 tests
    ├─ storage.ts       ← Supabase Storage (solo servidor)

@@ -14,16 +14,11 @@ import {
 import { Card } from "@/components/ui/Card";
 import { auth } from "@/lib/auth";
 import { formatCOP } from "@/lib/currency";
+import { longDate } from "@/lib/dates";
 import { getCollaboration } from "@/lib/queries/collaborations";
 
 export const metadata: Metadata = { title: "Colaboración" };
 export const dynamic = "force-dynamic";
-
-const dateFormat = new Intl.DateTimeFormat("es-ES", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
 
 export default async function CollaborationPage({
   params,
@@ -67,7 +62,7 @@ export default async function CollaborationPage({
           {isBrand
             ? `@${collaboration.counterpartName ?? "sin-usuario"}`
             : (collaboration.counterpartName ?? "Marca")}{" "}
-          · Desde el {dateFormat.format(new Date(collaboration.createdAt))}
+          · Desde el {longDate(collaboration.createdAt)}
         </p>
       </header>
 

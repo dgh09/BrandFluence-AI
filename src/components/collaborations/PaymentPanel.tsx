@@ -8,25 +8,9 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { formatCOPExplicit } from "@/lib/currency";
+import { shortDate } from "@/lib/dates";
 import type { PaymentInfo, ViewerRole } from "@/lib/queries/collaborations";
 import { PAYMENT_METHODS, paymentMethodLabel } from "@/lib/taxonomy";
-
-/**
- * Solo fecha, sin hora, y a propósito.
- *
- * Pedirle a `Intl` fecha **y** hora a la vez da cadenas distintas en Node y
- * en el navegador —"8 de agosto, 13:10" contra "8 de agosto a las 13:10",
- * según la versión de ICU de cada uno—, y eso rompe la hidratación: React
- * tira el HTML del servidor y vuelve a pintar. En producción sería aún peor,
- * porque el servidor corre en UTC y quien mira está en hora de Colombia.
- *
- * Para "cuándo se declaró un pago", el día es la precisión que importa.
- */
-const dateFormat = new Intl.DateTimeFormat("es-ES", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
 
 interface Props {
   collaborationId: string;
@@ -213,7 +197,7 @@ function Timeline({ payment }: { payment: PaymentInfo }) {
             ) : null}
           </div>
           <span className="shrink-0 text-xs text-ink-muted">
-            {step.at ? dateFormat.format(new Date(step.at)) : "Pendiente"}
+            {step.at ? shortDate(step.at) : "Pendiente"}
           </span>
         </li>
       ))}
