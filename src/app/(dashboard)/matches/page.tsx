@@ -15,6 +15,7 @@ const FILTERS: { value: MatchStatus | "all"; label: string }[] = [
   { value: "suggested", label: "Sugeridas" },
   { value: "interested", label: "Aplicadas" },
   { value: "rejected", label: "Descartadas" },
+  { value: "declined", label: "No seleccionadas" },
   { value: "all", label: "Todas" },
 ];
 

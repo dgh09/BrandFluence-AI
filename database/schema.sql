@@ -137,8 +137,12 @@ CREATE TABLE matches (
   campaign_id UUID NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
   match_score DECIMAL(5,2),        -- 0.00 - 100.00
   score_reason JSONB,              -- desglose del scoring (debug + explicabilidad)
+  -- 'rejected' lo escribe el creador al descartar una sugerencia y admite
+  -- vuelta atrás; 'declined' lo escribe la marca al no seleccionar a un
+  -- candidato y es terminal. Ver migrations/003.
   status      TEXT NOT NULL DEFAULT 'suggested'
-              CHECK (status IN ('suggested', 'interested', 'rejected', 'accepted')),
+              CHECK (status IN ('suggested', 'interested', 'rejected',
+                                'accepted', 'declined')),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (creator_id, campaign_id)

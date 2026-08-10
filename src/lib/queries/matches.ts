@@ -1,7 +1,22 @@
 import { query, queryOne } from "@/lib/db";
 import { parseScoreNotes, type MatchRow } from "@/lib/queries/dashboard";
 
-export type MatchStatus = "suggested" | "interested" | "rejected" | "accepted";
+/**
+ * Quién escribe cada estado importa:
+ *
+ * - 'rejected'  — el creador descarta la sugerencia. Reversible.
+ * - 'declined'  — la marca no selecciona al candidato. Terminal.
+ *
+ * Son dos valores y no uno porque el creador no descartó lo que la marca
+ * rechazó, y porque volver de 'rejected' a 'interested' está permitido pero
+ * volver de 'declined' no debe estarlo. Ver migrations/003.
+ */
+export type MatchStatus =
+  | "suggested"
+  | "interested"
+  | "rejected"
+  | "accepted"
+  | "declined";
 
 /** Lista de matches del creador, filtrable por estado. */
 export async function listCreatorMatches(
@@ -48,6 +63,10 @@ export async function listCreatorMatches(
  * El WHERE incluye el user_id del creador: si el match no es suyo, el UPDATE
  * afecta a 0 filas y devolvemos null. Así no hace falta un SELECT previo de
  * comprobación y no hay forma de tocar el match de otra persona.
+ *
+ * Los estados de partida admitidos dejan fuera 'accepted' y 'declined' a
+ * propósito: de una colaboración ya abierta no se sale por aquí, y de un
+ * rechazo de la marca no se vuelve re-aplicando.
  */
 export async function setMatchStatus(
   userId: string,
@@ -129,6 +148,38 @@ export async function acceptCandidate(
     paymentStatus: row.payment_status,
     agreedAmount: row.agreed_amount ? Number(row.agreed_amount) : null,
   };
+}
+
+/**
+ * La marca rechaza a un candidato: el match pasa a 'declined' y desaparece
+ * de su bandeja.
+ *
+ * Misma forma que acceptCandidate —la autorización vive en el WHERE, no en
+ * un SELECT previo— pero sin CTE: aquí no nace nada, solo cambia el estado.
+ *
+ * 'accepted' NO está entre los estados de partida. Rechazar a alguien con la
+ * colaboración ya abierta dejaría una colaboración viva colgando de un match
+ * rechazado; para deshacer eso está cancelar la colaboración, que sabe qué
+ * hacer con los entregables y con el pago.
+ *
+ * 'declined' sí está, para que un doble clic devuelva 200 y no un 404.
+ */
+export async function declineCandidate(
+  userId: string,
+  matchId: string,
+): Promise<{ id: string; status: string } | null> {
+  return queryOne<{ id: string; status: string }>(
+    `UPDATE matches m
+        SET status = 'declined'
+       FROM campaigns c
+       JOIN brands b ON b.id = c.brand_id
+      WHERE m.id = $2
+        AND c.id = m.campaign_id
+        AND b.user_id = $1
+        AND m.status IN ('interested', 'declined')
+      RETURNING m.id, m.status`,
+    [userId, matchId],
+  );
 }
 
 export interface CandidateRow {

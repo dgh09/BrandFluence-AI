@@ -10,10 +10,13 @@ import { formatCOP } from "@/lib/currency";
 import { matchScoreColor } from "@/lib/design-tokens";
 import type { MatchRow } from "@/lib/queries/dashboard";
 
+// "Descartada" es cosa del creador; "No seleccionada" es cosa de la marca.
+// El texto tiene que dejar claro quién cerró la puerta.
 const STATUS_LABEL: Record<string, string> = {
   interested: "Aplicada",
   rejected: "Descartada",
   accepted: "Aceptada",
+  declined: "No seleccionada",
 };
 
 /**

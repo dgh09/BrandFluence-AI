@@ -38,6 +38,7 @@ Lo que ya funciona, recorrido entero en el navegador contra una base de datos y 
 | ✅ | Publicación de campañas |
 | ✅ | **Algoritmo de matching** con puntuación explicada |
 | ✅ | Aplicar y descartar candidaturas |
+| ✅ | **Rechazar a un candidato** (marca) |
 | ✅ | Panel diferenciado para creador y para marca |
 | ✅ | **Aceptar candidato → crear colaboración** |
 | ✅ | **Entregables y cierre de la colaboración** |
@@ -121,13 +122,26 @@ ON CONFLICT (creator_id, campaign_id) DO UPDATE
 
 ## Del match a la colaboración
 
-Un match recorre cuatro estados, y cada transición la provoca una persona distinta:
+Un match recorre cinco estados, y cada transición la provoca una persona distinta:
 
 ```
 sugerido ──creador aplica──> interesado ──marca acepta──> aceptado
+    │                            │                           │
+    │                            └──marca rechaza──> no seleccionado
     │                                                        │
     └──creador descarta──> descartado                        └──> colaboración
 ```
+
+**`descartado` y `no seleccionado` son estados distintos** (`rejected` y `declined`), y la
+diferencia no es cosmética:
+
+- Los escribe gente distinta. Con un solo valor, el creador vería bajo «Descartadas»
+  campañas que él nunca descartó.
+- `rejected` es reversible a propósito: quien descarta puede cambiar de idea y aplicar
+  después. Si la marca escribiera ahí, el creador rechazado podría re-postularse y
+  reaparecer en la bandeja al instante. `declined` cierra la conversación.
+
+Ninguno de los dos lo resucita el recálculo del matching, que solo toca filas `suggested`.
 
 Aceptar hace dos cosas —mover el match a `accepted` y crear la colaboración— y **las dos ocurren en una sola sentencia SQL**. Si fueran dos, un fallo entre medias dejaría un match aceptado sin colaboración, y el `UNIQUE (match_id)` impediría repararlo reintentando. Una CTE que modifica datos lo resuelve sin reservar un cliente del pool ni escribir `BEGIN`/`COMMIT` a mano, algo que además el pooler de Supabase en modo *transaction* desaconseja:
 
@@ -152,6 +166,8 @@ Tres detalles que no son accidentales:
 **Aceptar dos veces no falla.** Se admite `accepted` como estado de entrada y el `ON CONFLICT` devuelve la colaboración que ya existía. Un doble clic no se convierte en un 404 confuso.
 
 **No se puede aceptar a quien no ha aplicado.** Un match en `suggested` no entra en el `IN (...)`: la marca no puede empujar a un creador a una colaboración que él no ha pedido.
+
+Rechazar es la misma forma sin CTE —aquí no nace nada— y con una exclusión de más: `accepted` **no** está entre los estados de partida. Rechazar a alguien con la colaboración ya abierta dejaría una colaboración viva colgando de un match rechazado; para deshacer eso está cancelar la colaboración, que sabe qué hacer con los entregables y con el pago.
 
 ### La colaboración, una vez abierta
 
@@ -482,7 +498,8 @@ Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native n
 - [x] Métricas de rendimiento de la colaboración
 - [x] Subida de imágenes y vídeo (Supabase Storage)
 - [ ] Negociar el importe por candidato — hoy se hereda de la campaña
-- [ ] Que la marca pueda rechazar a un candidato — hoy solo puede aceptarlo
+- [x] Que la marca pueda rechazar a un candidato
+- [ ] Deshacer un rechazo — hoy `declined` es terminal y la tarjeta no vuelve a la bandeja
 - [x] Registro del pago declarado por las dos partes
 - [ ] Borrar de Storage los ficheros de una colaboración eliminada
 - [ ] Cobro real con pasarela (Wompi o Mercado Pago) y comisión

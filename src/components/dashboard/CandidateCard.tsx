@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Handshake } from "lucide-react";
+import { Handshake, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -12,28 +12,29 @@ import type { CandidateRow } from "@/lib/queries/matches";
 import { nicheLabel } from "@/lib/taxonomy";
 
 /**
- * Candidato visto por la marca, con la acción de aceptarlo.
+ * Candidato visto por la marca, con las acciones de aceptarlo y rechazarlo.
  *
- * Es el espejo de MatchCard: allí el creador aplica, aquí la marca acepta.
- * Misma jerarquía visual —nombre, línea de meta, score— para que las dos
- * bandejas se lean igual aunque el rol sea el contrario.
+ * Es el espejo de MatchCard: allí el creador aplica o descarta, aquí la marca
+ * acepta o rechaza. Misma jerarquía visual —nombre, línea de meta, score— y
+ * el mismo par de botones (secundario a la izquierda, primario a la derecha)
+ * para que las dos bandejas se lean igual aunque el rol sea el contrario.
  */
 export function CandidateCard({ candidate }: { candidate: CandidateRow }) {
   const router = useRouter();
-  const [accepted, setAccepted] = useState(candidate.status === "accepted");
+  const [status, setStatus] = useState(candidate.status);
   const [amount, setAmount] = useState(candidate.agreedAmount);
-  const [pending, setPending] = useState(false);
+  const [pending, setPending] = useState<null | "accept" | "decline">(null);
   const [error, setError] = useState<string | null>(null);
 
   async function accept() {
-    setPending(true);
+    setPending("accept");
     setError(null);
 
     const response = await fetch(`/api/matches/${candidate.matchId}/accept`, {
       method: "POST",
     });
 
-    setPending(false);
+    setPending(null);
 
     if (!response.ok) {
       const data = await response.json().catch(() => null);
@@ -42,11 +43,38 @@ export function CandidateCard({ candidate }: { candidate: CandidateRow }) {
     }
 
     const data = (await response.json()) as { agreedAmount: number | null };
-    setAccepted(true);
+    setStatus("accepted");
     setAmount(data.agreedAmount);
     // La colaboración recién creada cambia los contadores del dashboard y
     // la lista de /collaborations, que se calculan en el servidor.
     router.refresh();
+  }
+
+  async function decline() {
+    setPending("decline");
+    setError(null);
+
+    const response = await fetch(`/api/matches/${candidate.matchId}/decline`, {
+      method: "POST",
+    });
+
+    setPending(null);
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      setError(data?.error ?? "No se pudo rechazar al candidato");
+      return;
+    }
+
+    // Aquí NO va router.refresh(), a diferencia de accept(). La consulta de
+    // la bandeja no trae los rechazados, así que refrescar borraría la
+    // tarjeta de debajo del cursor y el usuario no llegaría a leer qué pasó.
+    // Se queda en pantalla confirmando, y desaparece al recargar.
+    //
+    // Los contadores de Inicio y Campañas cuentan los 'interested', así que
+    // este rechazo los cambia — pero esas páginas son force-dynamic y se
+    // recalculan al navegar a ellas, que es cuando se ven.
+    setStatus("declined");
   }
 
   return (
@@ -90,7 +118,7 @@ export function CandidateCard({ candidate }: { candidate: CandidateRow }) {
         </p>
       ) : null}
 
-      {accepted ? (
+      {status === "accepted" ? (
         <p
           role="status"
           className="flex items-center justify-between text-sm font-medium text-good"
@@ -100,20 +128,36 @@ export function CandidateCard({ candidate }: { candidate: CandidateRow }) {
             <span className="tabular font-bold">{formatCOP(amount)}</span>
           ) : null}
         </p>
+      ) : status === "declined" ? (
+        <p role="status" className="text-sm font-medium text-ink-secondary">
+          Candidato rechazado
+        </p>
       ) : (
-        <Button
-          size="sm"
-          icon={<Handshake size={16} />}
-          fullWidth
-          disabled={pending}
-          onClick={accept}
-        >
-          {pending
-            ? "…"
-            : candidate.campaignBudget !== null
-              ? `Aceptar por ${formatCOP(candidate.campaignBudget)}`
-              : "Aceptar candidato"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<X size={16} />}
+            fullWidth
+            disabled={pending !== null}
+            onClick={decline}
+          >
+            {pending === "decline" ? "…" : "Rechazar"}
+          </Button>
+          <Button
+            size="sm"
+            icon={<Handshake size={16} />}
+            fullWidth
+            disabled={pending !== null}
+            onClick={accept}
+          >
+            {pending === "accept"
+              ? "…"
+              : candidate.campaignBudget !== null
+                ? `Aceptar por ${formatCOP(candidate.campaignBudget)}`
+                : "Aceptar"}
+          </Button>
+        </div>
       )}
     </Card>
   );
