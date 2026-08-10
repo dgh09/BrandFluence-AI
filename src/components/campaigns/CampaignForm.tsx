@@ -89,12 +89,12 @@ export function CampaignForm() {
         />
 
         <Input
-          label="Presupuesto (€)"
+          label="Presupuesto (COP)"
           name="budget"
           type="number"
           inputMode="numeric"
           min={0}
-          placeholder="2500"
+          placeholder="2500000"
           required
         />
 

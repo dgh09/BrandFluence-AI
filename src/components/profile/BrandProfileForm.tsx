@@ -87,13 +87,13 @@ export function BrandProfileForm({ profile }: { profile: BrandProfile }) {
       />
 
       <Input
-        label="Presupuesto mensual (€)"
+        label="Presupuesto mensual (COP)"
         name="monthlyBudget"
         type="number"
         inputMode="numeric"
         min={0}
         defaultValue={profile.monthlyBudget ?? ""}
-        placeholder="5000"
+        placeholder="12000000"
         hint="Opcional. Nos ayuda a sugerirte creadores dentro de tu rango."
       />
 
