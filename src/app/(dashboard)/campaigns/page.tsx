@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { auth } from "@/lib/auth";
 import { formatCOP } from "@/lib/currency";
+import { formatCount } from "@/lib/numbers";
 import { listBrandCampaigns } from "@/lib/queries/campaigns";
 import { nicheLabel } from "@/lib/taxonomy";
 
@@ -43,7 +44,7 @@ export default async function CampaignsPage() {
                   <p className="mt-0.5 text-sm text-ink-secondary">
                     {nicheLabel(campaign.targetNiche) ?? "Sin nicho"}
                     {campaign.minFollowers > 0
-                      ? ` · desde ${campaign.minFollowers.toLocaleString("es-ES")} seguidores`
+                      ? ` · desde ${formatCount(campaign.minFollowers)} seguidores`
                       : ""}
                   </p>
                 </div>

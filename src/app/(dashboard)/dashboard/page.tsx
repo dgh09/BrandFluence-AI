@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ScoreRing } from "@/components/ui/ScoreRing";
 import { auth } from "@/lib/auth";
 import { formatCOP } from "@/lib/currency";
+import { formatCount } from "@/lib/numbers";
 import { getBrandDashboard, getCreatorDashboard } from "@/lib/queries/dashboard";
 
 export const metadata: Metadata = { title: "Inicio" };
@@ -99,7 +100,7 @@ async function CreatorView({ userId }: { userId: string }) {
         icon={<Handshake size={16} />}
         hint={
           data.niche
-            ? `Nicho: ${data.niche} · ${data.followerCount.toLocaleString("es-ES")} seguidores`
+            ? `Nicho: ${data.niche} · ${formatCount(data.followerCount)} seguidores`
             : "Añade tu nicho para mejorar el matching"
         }
       />

@@ -7,6 +7,7 @@ import { Handshake, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { formatCOP } from "@/lib/currency";
+import { formatCount } from "@/lib/numbers";
 import { matchScoreColor } from "@/lib/design-tokens";
 import type { CandidateRow } from "@/lib/queries/matches";
 import { nicheLabel } from "@/lib/taxonomy";
@@ -86,7 +87,7 @@ export function CandidateCard({ candidate }: { candidate: CandidateRow }) {
           </p>
           <p className="mt-0.5 truncate text-sm text-ink-secondary">
             {nicheLabel(candidate.creatorNiche) ?? "Sin nicho"} ·{" "}
-            {candidate.creatorFollowers.toLocaleString("es-ES")} seguidores
+            {formatCount(candidate.creatorFollowers)} seguidores
             {candidate.creatorEngagement !== null
               ? ` · ${candidate.creatorEngagement}% engagement`
               : ""}

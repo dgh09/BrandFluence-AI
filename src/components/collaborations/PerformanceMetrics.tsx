@@ -13,6 +13,7 @@ import {
   type PerformanceMetrics as Metrics,
 } from "@/lib/metrics";
 import { longDate } from "@/lib/dates";
+import { formatCount, formatPercent } from "@/lib/numbers";
 import type { ViewerRole } from "@/lib/queries/collaborations";
 
 const LABEL: Record<MetricKey, string> = {
@@ -23,11 +24,6 @@ const LABEL: Record<MetricKey, string> = {
   saves: "Guardados",
 };
 
-const number = new Intl.NumberFormat("es-ES");
-const percent = new Intl.NumberFormat("es-ES", {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
 
 interface Props {
   collaborationId: string;
@@ -96,7 +92,7 @@ export function PerformanceMetrics({
                 Engagement
               </p>
               <p className="tabular mt-1 text-3xl font-bold leading-none">
-                {percent.format(rate)}%
+                {formatPercent(rate)}
               </p>
               <p className="mt-1.5 text-xs text-ink-muted">
                 Interacciones sobre visualizaciones
@@ -109,7 +105,7 @@ export function PerformanceMetrics({
               <StatTile
                 key={key}
                 label={LABEL[key]}
-                value={number.format(metrics![key]!)}
+                value={formatCount(metrics![key]!)}
               />
             ))}
           </div>
