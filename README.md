@@ -5,6 +5,8 @@
 **La plataforma que conecta creadores con marcas.**
 Matching con IA para campañas UGC.
 
+**[brand-fluence-ai.vercel.app](https://brand-fluence-ai.vercel.app)**
+
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
@@ -27,9 +29,9 @@ BrandFluence AI puntúa cada pareja creador–campaña del 0 al 100 y explica po
 
 ## Estado del proyecto
 
-> **MVP en desarrollo activo. Listo para desplegar, pero todavía sin usuarios reales.**
+> **MVP en desarrollo activo. Desplegado y en pie, pero todavía sin usuarios reales.**
 
-Lo que ya funciona, recorrido entero en el navegador contra una base de datos y un Storage reales:
+Lo que ya funciona, recorrido entero en el navegador contra una base de datos y un Storage reales — y desde el 11 de agosto de 2026, también contra el sitio desplegado:
 
 | | |
 |---|---|
@@ -47,7 +49,7 @@ Lo que ya funciona, recorrido entero en el navegador contra una base de datos y 
 | ✅ | **Registro del pago**, declarado por las dos partes |
 | ✅ | **Notificaciones in-app** con campana y contador |
 | ✅ | Portada pública con el producto y el algoritmo |
-| 📋 | Despliegue en Vercel — *preparado, pendiente de lanzar* |
+| ✅ | **Desplegado en Vercel** — [brand-fluence-ai.vercel.app](https://brand-fluence-ai.vercel.app) |
 | 📋 | Pasarela de pago (Wompi o Mercado Pago) |
 | 📋 | Apps nativas iOS y Android (Expo) |
 
@@ -516,6 +518,24 @@ lee**:
 > Para las credenciales que pide esta app —email y perfil— pasar a *In
 > production* no requiere pasar la revisión de Google.
 
+### Qué se comprobó contra el sitio desplegado
+
+El 11 de agosto de 2026, sobre `brand-fluence-ai.vercel.app`:
+
+| | |
+|---|---|
+| `/api/health` | `db: up` |
+| `/dashboard` sin sesión | `307` a `/login` |
+| `/api/auth/providers` | el `callbackUrl` sale con el dominio `https` — `AUTH_URL` surtió efecto |
+| Login con Google | completo, incluido el canje del código en el callback |
+| Aplicar a una campaña | el match pasa a `interested` y el aviso le llega **a la marca** |
+| Colaboración | pago en dos casillas, entregables, métricas y engagement derivado |
+| `service_role` en el bundle | ninguna coincidencia |
+
+Dos detalles que solo se ven desplegado: los importes salen `$2.500.000` y las
+cifras `42.000` / `3.100`, las dos agrupadas —el fallo de `es-ES` habría escrito
+`3100`—, y las fechas `10 de ago de 2026`, con año.
+
 ### Dos cosas que vigilar
 
 **Las cuentas de demo son públicas.** `@brandfluence.demo` y su contraseña
@@ -674,7 +694,7 @@ Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native n
 - [ ] Borrar de Storage los ficheros de una colaboración eliminada
 - [x] Notificaciones in-app
 - [x] Portada pública en la raíz
-- [ ] Desplegar en Vercel — preparado, pendiente de lanzar
+- [x] Desplegar en Vercel — [brand-fluence-ai.vercel.app](https://brand-fluence-ai.vercel.app)
 - [ ] Avisar fuera de la app (email o push) — hoy hay que entrar para enterarse
 - [ ] Verificar el email en el alta — hoy el enlace por email permite una toma de cuenta
 - [ ] Cobro real con pasarela (Wompi o Mercado Pago) y comisión
