@@ -518,6 +518,31 @@ lee**:
 > Para las credenciales que pide esta app —email y perfil— pasar a *In
 > production* no requiere pasar la revisión de Google.
 
+### Desde aquí, `main` es el sitio
+
+La integración de GitHub está conectada, así que **cada push a `main` despliega
+a producción** sin que nadie pulse nada. No hay workflow de CI que mantener:
+Vercel escucha los webhooks del repositorio.
+
+| Push a… | Qué pasa |
+|---|---|
+| `main` | Build y despliegue **a producción**. `brand-fluence-ai.vercel.app` apunta al nuevo al terminar |
+| cualquier otra rama | Despliegue **preview**, con URL propia. Producción no se toca |
+
+De ahí que el trabajo vaya en rama y a `main` solo pase lo verificado: un build
+roto en `main` deja la portada caída hasta el siguiente push.
+
+Dos cosas que **no** se automatizan:
+
+**Cambiar una variable de entorno no redespliega nada.** Queda guardada, pero el
+despliegue que está sirviendo se construyó sin ella; hay que ir a *Deployments →
+Redeploy*. Con las `NEXT_PUBLIC_*` es aún más estricto: se incrustan en el bundle
+durante el build.
+
+**Volver atrás no se hace con un push.** Se busca en *Deployments* el que
+funcionaba y se le da a *Promote to Production*. Es instantáneo, porque ese build
+ya existe.
+
 ### Qué se comprobó contra el sitio desplegado
 
 El 11 de agosto de 2026, sobre `brand-fluence-ai.vercel.app`:
