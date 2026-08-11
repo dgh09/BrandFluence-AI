@@ -27,7 +27,7 @@ BrandFluence AI puntúa cada pareja creador–campaña del 0 al 100 y explica po
 
 ## Estado del proyecto
 
-> **MVP en desarrollo activo. Todavía no está desplegado ni tiene usuarios reales.**
+> **MVP en desarrollo activo. Listo para desplegar, pero todavía sin usuarios reales.**
 
 Lo que ya funciona, recorrido entero en el navegador contra una base de datos y un Storage reales:
 
@@ -46,6 +46,8 @@ Lo que ya funciona, recorrido entero en el navegador contra una base de datos y 
 | ✅ | **Subida de imágenes y vídeo** a Supabase Storage |
 | ✅ | **Registro del pago**, declarado por las dos partes |
 | ✅ | **Notificaciones in-app** con campana y contador |
+| ✅ | Portada pública con el producto y el algoritmo |
+| 📋 | Despliegue en Vercel — *preparado, pendiente de lanzar* |
 | 📋 | Pasarela de pago (Wompi o Mercado Pago) |
 | 📋 | Apps nativas iOS y Android (Expo) |
 
@@ -464,6 +466,56 @@ El script imprime las credenciales de acceso al terminar.
 
 ---
 
+## Despliegue
+
+Pensado para Vercel, importando el repositorio desde
+[vercel.com/new](https://vercel.com/new). Next.js se detecta solo y no hay
+que tocar comandos de build. El código ya está preparado: `db.ts` crea el
+pool en la primera consulta y no al importar el módulo, precisamente para
+que `next build` funcione sin `DATABASE_URL` en el entorno de build.
+
+**Ocho variables**, y solo ocho. `OPENAI_API_KEY`, las dos de Stripe y
+`SENDGRID_API_KEY` siguen en el `.env.example` pero **ningún código las
+lee**:
+
+| Variable | Nota |
+|---|---|
+| `DATABASE_URL` | El **pooler, puerto 6543**. El directo agota conexiones en serverless. |
+| `AUTH_SECRET` | El mismo que en local. |
+| `AUTH_URL` | Nueva: `https://tu-dominio`, sin barra final. |
+| `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET` | Los de local. |
+| `NEXT_PUBLIC_SUPABASE_URL` · `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Se incrustan en el bundle del navegador **durante el build**. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Salta el RLS. Solo servidor, nunca con prefijo `NEXT_PUBLIC_`. |
+
+`MATCHING_ADMIN_TOKEN` solo hace falta para `/api/matches/regenerate`; sin
+él la ruta responde 503, que es fallar cerrada.
+
+### El orden importa
+
+1. Importar el repositorio y **pegar las variables antes del primer
+   despliegue** — las `NEXT_PUBLIC_*` se incrustan al compilar.
+2. Desplegar y copiar la URL.
+3. Añadir `https://TU-DOMINIO/api/auth/callback/google` a los *Authorized
+   redirect URIs* del cliente OAuth en Google Cloud Console. Sin esto,
+   entrar con Google devuelve `redirect_uri_mismatch`. El de `localhost`
+   se deja, para seguir trabajando en local.
+4. Añadir `AUTH_URL` con ese dominio y volver a desplegar. NextAuth deduce
+   el host solo, pero en las *preview* de rama la URL cambia en cada
+   despliegue y los callbacks dejan de cuadrar.
+
+### Dos cosas que vigilar
+
+**Las cuentas de demo son públicas.** `@brandfluence.demo` y su contraseña
+están en `scripts/seed-demo.mjs`, y este repositorio es público: cualquiera
+que abra la URL desplegada puede entrar con ellas. Para enseñar el producto
+está bien; si el enlace circula, `seed-demo.mjs --clean`.
+
+**Conexiones de Supabase.** El pool abre hasta 10 por instancia y en
+serverless puede haber muchas a la vez. Con el plan gratuito conviene mirar
+el uso del pooler si sube el tráfico.
+
+---
+
 ## Scripts
 
 | Comando | Qué hace |
@@ -582,6 +634,8 @@ Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native n
 - [x] Registro del pago declarado por las dos partes
 - [ ] Borrar de Storage los ficheros de una colaboración eliminada
 - [x] Notificaciones in-app
+- [x] Portada pública en la raíz
+- [ ] Desplegar en Vercel — preparado, pendiente de lanzar
 - [ ] Avisar fuera de la app (email o push) — hoy hay que entrar para enterarse
 - [ ] Cobro real con pasarela (Wompi o Mercado Pago) y comisión
 - [ ] Briefs generados con IA
