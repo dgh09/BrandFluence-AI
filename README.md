@@ -422,6 +422,7 @@ Necesita `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `SUPABASE
 | Base de datos | PostgreSQL en Supabase | Postgres + Storage + SDKs nativos en un solo sitio |
 | Autenticación | NextAuth v5 (Auth.js) | Estrategia JWT, pensando en las apps nativas |
 | Validación | Zod | Mismos esquemas en API y formularios |
+| Animación | `motion` | Una dependencia, sin tocar los tokens. Se descartó una librería de componentes: ver [Diseño](#diseño) |
 | Tests | Runner nativo de Node | Cero dependencias añadidas |
 
 ---
@@ -627,7 +628,7 @@ src/
 │  ├─ api/             toda la lógica de negocio
 │  └─ onboarding/      elección de tipo de cuenta tras entrar con Google
 ├─ components/         ui/ · dashboard/ · profile/ · campaigns/ ·
-│                      collaborations/ · shared/
+│                      collaborations/ · shared/ · landing/
 └─ lib/
    ├─ matching.ts      ← el algoritmo (función pura)
    ├─ matching.test.ts ← sus 19 tests
@@ -701,6 +702,55 @@ Hay **dos paletas separadas a propósito**. La de interfaz mantiene los colores 
 
 Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native no entiende variables CSS, y ese fichero se reutilizará tal cual en la app de Expo.
 
+### Por qué no hay librería de componentes
+
+La respuesta fácil a «mejorar la interfaz» es instalar shadcn/ui. Aquí se
+descartó, y el motivo es ese fichero de tokens: shadcn es Radix, que es solo
+DOM. Adoptarlo partiría el sistema de diseño justo por donde se decidió no
+partirlo, obligaría a mantener dos vocabularios de tokens y no aportaría nada
+visual — da componentes correctos, no llamativos. Las ocho primitivas de
+`components/ui/` siguen escritas a mano.
+
+Lo único que entró fue `motion`, para animación. No toca los tokens.
+
+### El fondo no es negro plano
+
+Dos capas en `globals.css`, casi invisibles por separado y evidentes cuando
+faltan. Una **elevación** que tira el lienzo hacia `--color-surface` por arriba,
+para que la página tenga una fuente de luz en vez de ser una superficie muerta;
+va fija al viewport, así que ninguna pantalla queda nunca en negro uniforme. Y
+**grano** al 3,5%.
+
+El grano no es decoración: los resplandores de la portada son desenfoques de más
+de 100px sobre un negro casi puro, y eso **dibuja anillos escalonados** en
+pantallas de 8 bits. El ruido los disuelve.
+
+Lo que se gana es contraste de bordes. `--color-line` es `#26262A`, a un paso del
+fondo: sobre negro uniforme se perdía, y ahora tiene contra qué recortarse.
+
+### La portada enseña el algoritmo, no lo describe
+
+El `ScoreRing` es la pieza más reconocible del panel y en la portada no
+aparecía: había cuatro secciones de prosa explicando una puntuación que el
+visitante nunca llegaba a ver. Ahora el hero lleva a la derecha una tarjeta viva
+—anillo que cuenta, cuatro barras que se llenan, tres campañas rotando— con el
+desglose que devuelve `scoreMatch` para el perfil de Lucía.
+
+**No son cifras de relleno.** Si el algoritmo cambia, esa tarjeta miente, y
+`matching.test.ts` es donde se notaría.
+
+Las barras llevan el color del anillo y no el coral de acción, porque son su
+desglose: la regla de las dos paletas dice que las marcas de datos no usan la de
+UI, y un anillo verde con barras coral leía como dos informaciones distintas.
+
+Con `prefers-reduced-motion`, `Reveal` devuelve sus hijos sin envolver. La regla
+global de `globals.css` solo desactiva animaciones de **CSS**, y estas son de
+JavaScript: sin esa rama, quien pide menos movimiento se quedaría el contenido
+invisible esperando una animación que nunca llega.
+
+> **Sin terminar.** Esta es una primera pasada y todavía no convence. Vive en la
+> rama `dev`; producción sigue con la portada anterior.
+
 ---
 
 ## Hoja de ruta
@@ -719,6 +769,8 @@ Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native n
 - [ ] Borrar de Storage los ficheros de una colaboración eliminada
 - [x] Notificaciones in-app
 - [x] Portada pública en la raíz
+- [ ] Rediseño de la portada — primera pasada en `dev`, todavía no convence
+- [ ] Rediseño del panel por dentro — pendiente, después de la portada
 - [x] Desplegar en Vercel — [brand-fluence-ai.vercel.app](https://brand-fluence-ai.vercel.app)
 - [ ] Avisar fuera de la app (email o push) — hoy hay que entrar para enterarse
 - [ ] Verificar el email en el alta — hoy el enlace por email permite una toma de cuenta
