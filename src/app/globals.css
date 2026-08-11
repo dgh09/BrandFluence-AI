@@ -76,6 +76,48 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ---------------------------------------------------------------------------
+   El fondo no es plano
+
+   Negro sigue mandando: las dos capas de abajo son casi invisibles por
+   separado y solo se notan cuando faltan. Lo que consiguen es que los bordes
+   de tarjeta (--color-line, a un paso del fondo) tengan contra qué recortarse.
+   Sobre un negro uniforme, un borde de #26262A se pierde.
+   --------------------------------------------------------------------------- */
+
+/* 1. Elevación. El lienzo sube hacia el color de tarjeta por arriba, así que
+      la página tiene una fuente de luz en vez de ser una superficie muerta.
+      Usa --color-surface a propósito: no inventa un color nuevo que habría que
+      duplicar en design-tokens.ts, y "el fondo tiende a la tarjeta" es
+      exactamente lo que se quiere decir. `fixed` para que la luz no se
+      despegue al hacer scroll. */
+body {
+  background-image: radial-gradient(
+    120% 70% at 50% 0%,
+    color-mix(in oklab, var(--color-surface) 85%, transparent) 0%,
+    transparent 62%
+  );
+  background-attachment: fixed;
+}
+
+/* 2. Grano. Rompe la planitud y, sobre todo, mata el bandeado: los
+      resplandores de la portada son desenfoques de más de 100px sobre un
+      negro casi puro, y eso dibuja anillos escalonados en pantallas de 8 bits.
+      El ruido los disuelve.
+
+      Va encima de todo porque el grano de película es una capa, no un fondo,
+      pero al 3,5% no toca la legibilidad de ningún texto. `pointer-events:
+      none` para que no intercepte ni un clic. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 /* Cifras grandes alineadas en columnas (stat tiles, tablas de score) */
 .tabular {
   font-variant-numeric: tabular-nums;
