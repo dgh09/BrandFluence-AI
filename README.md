@@ -8,7 +8,7 @@ Matching con IA para campañas UGC.
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
-[![Tests](https://img.shields.io/badge/tests-53%20passing-2FA898)](#tests)
+[![Tests](https://img.shields.io/badge/tests-81%20passing-2FA898)](#tests)
 [![Estado](https://img.shields.io/badge/estado-MVP%20en%20desarrollo-FF3B4F)](#estado-del-proyecto)
 
 </div>
@@ -535,9 +535,9 @@ el uso del pooler si sube el tráfico.
 ### Tests
 
 ```
-✓ 44 consultas revisadas, todas cuadran
-# tests 53
-# pass 53
+✓ 51 consultas revisadas, todas cuadran
+# tests 81
+# pass 81
 # fail 0
 ```
 
@@ -576,11 +576,13 @@ src/
    ├─ metrics.ts       ← engagement derivado (función pura)
    ├─ metrics.test.ts  ← sus 12 tests
    ├─ currency.ts      ← importes en pesos (pura)
+   ├─ currency.test.ts ← sus 6 tests
    ├─ dates.ts         ← fechas (pura)
    ├─ dates.test.ts    ← sus 11 tests
    ├─ numbers.ts       ← cifras y porcentajes (pura)
    ├─ numbers.test.ts  ← sus 8 tests
    ├─ notifications.ts ← el texto de los avisos (pura)
+   ├─ notifications.test.ts ← sus 9 tests
    ├─ uploads.ts       ← reglas de subida (pura, vale en el navegador)
    ├─ uploads.test.ts  ← sus 16 tests
    ├─ storage.ts       ← Supabase Storage (solo servidor)
