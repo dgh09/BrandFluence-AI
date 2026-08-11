@@ -492,6 +492,12 @@ lee**:
 
 ### El orden importa
 
+0. Tener un cliente OAuth de Google que funcione **en local**. Es el paso
+   más fácil de dar por hecho: `auth.ts` registra el proveedor y el
+   formulario pinta «Continuar con Google» sin condición, así que con las
+   credenciales vacías el botón sigue ahí y solo falla al pulsarlo.
+   Comprobarlo en `localhost` sale mucho más barato que descubrirlo
+   desplegado.
 1. Importar el repositorio y **pegar las variables antes del primer
    despliegue** — las `NEXT_PUBLIC_*` se incrustan al compilar.
 2. Desplegar y copiar la URL.
@@ -501,7 +507,14 @@ lee**:
    se deja, para seguir trabajando en local.
 4. Añadir `AUTH_URL` con ese dominio y volver a desplegar. NextAuth deduce
    el host solo, pero en las *preview* de rama la URL cambia en cada
-   despliegue y los callbacks dejan de cuadrar.
+   despliegue y los callbacks dejan de cuadrar. Una variable nueva **no
+   entra en un despliegue ya construido**: hay que volver a desplegar.
+
+> **La pantalla de consentimiento hay que publicarla.** Un cliente OAuth
+> nuevo nace con la app en estado *Testing*, y ahí solo entran los correos
+> añadidos a mano como *test users*; cualquier otro recibe `access_denied`.
+> Para las credenciales que pide esta app —email y perfil— pasar a *In
+> production* no requiere pasar la revisión de Google.
 
 ### Dos cosas que vigilar
 
