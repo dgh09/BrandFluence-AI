@@ -622,6 +622,30 @@ database/
 - **La unicidad se resuelve capturando la violación de constraint**, no con un `SELECT` previo, que dejaría una ventana de carrera entre la lectura y la escritura.
 - Las contraseñas se guardan con bcrypt (coste 12). Los logins fallidos comparan contra un hash señuelo para que el tiempo de respuesta no revele si el email existe.
 
+### Una puerta que sigue abierta: el alta no verifica el email
+
+`auth.ts` lleva `allowDangerousEmailAccountLinking: true`, y el alta por
+contraseña no manda ningún correo de confirmación. Por separado, cada cosa es
+defendible. Juntas, permiten quedarse con la cuenta de otra persona:
+
+1. Alguien se registra con contraseña usando un email que no es suyo. Nadie le
+   pide confirmarlo.
+2. La dueña real de ese correo entra un día con «Continuar con Google».
+3. En vez de rechazarla con `OAuthAccountNotLinked`, Auth.js la mete **en la
+   cuenta que creó el otro**, porque el email coincide. Eso es exactamente lo
+   que el flag desactiva, y por eso se llama *dangerous*.
+4. El otro sigue sabiendo la contraseña.
+
+El flag está ahí por una razón real: sin él, quien se dio de alta con
+contraseña y luego pulsa el botón de Google se choca con un error que no
+explica nada. La solución correcta no es quitarlo, es **verificar el email en
+el alta** — y eso pide proveedor de correo, plantilla, token y un estado más en
+la base. Está en la hoja de ruta, emparejado con «avisar fuera de la app»,
+porque las dos necesitan lo mismo.
+
+Mientras no haya usuarios reales el riesgo práctico es nulo, pero queda escrito
+aquí y no en la cabeza de nadie.
+
 ---
 
 ## Diseño
@@ -652,6 +676,7 @@ Los tokens están duplicados en `src/lib/design-tokens.ts` porque React Native n
 - [x] Portada pública en la raíz
 - [ ] Desplegar en Vercel — preparado, pendiente de lanzar
 - [ ] Avisar fuera de la app (email o push) — hoy hay que entrar para enterarse
+- [ ] Verificar el email en el alta — hoy el enlace por email permite una toma de cuenta
 - [ ] Cobro real con pasarela (Wompi o Mercado Pago) y comisión
 - [ ] Briefs generados con IA
 - [ ] Detección de seguidores falsos
