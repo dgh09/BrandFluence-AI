@@ -767,6 +767,13 @@ alguno se quedara atrás, así que ahora es `components/shared/Logo.tsx` y el
 símbolo va en SVG en línea —cinco trazos— para que tome los colores de los
 tokens en vez de tenerlos escritos aparte.
 
+El icono del sitio va por duplicado a propósito: `app/icon.svg` para los
+navegadores modernos y `app/favicon.ico` de respaldo para lo que pida el `.ico`
+a pelo. Next emite los dos `<link rel="icon">` y cada navegador elige. El `.ico`
+lleva 16, 32 y 48 px, y **el de 16 va simplificado** —solo el hexágono
+exterior—: a ese tamaño el hexágono interior y los tres radios se funden en una
+mancha. Se genera con `scripts/favicon.ps1`, sin dependencias.
+
 > **De dónde sale.** El rediseño se hizo en [Claude Design](https://claude.ai/design)
 > sobre un sistema extraído de este repositorio, y de ahí se tradujo a TSX y
 > Tailwind. Lo que llegó eran cifras redondeadas y una tarjeta de nicho `moda`
