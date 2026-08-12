@@ -772,8 +772,6 @@ tokens en vez de tenerlos escritos aparte.
 > Tailwind. Lo que llegó eran cifras redondeadas y una tarjeta de nicho `moda`
 > contra una campaña `fitness` — que el algoritmo nunca produce, porque no son
 > nichos afines. Ambas cosas están corregidas y verificadas contra `scoreMatch`.
->
-> Vive en la rama `dev`; producción sigue con la portada anterior.
 
 ---
 
@@ -793,7 +791,7 @@ tokens en vez de tenerlos escritos aparte.
 - [ ] Borrar de Storage los ficheros de una colaboración eliminada
 - [x] Notificaciones in-app
 - [x] Portada pública en la raíz
-- [ ] Rediseño de la portada — segunda pasada en `dev`, desde el sistema de diseño
+- [x] Rediseño de la portada — desde el sistema de diseño, con la demo del swipe
 - [ ] Rediseño del panel por dentro — pendiente, después de la portada
 - [ ] Decidir si se cambia la paleta de acento — hoy sigue el coral `#FF3B4F`
 - [x] Desplegar en Vercel — [brand-fluence-ai.vercel.app](https://brand-fluence-ai.vercel.app)
