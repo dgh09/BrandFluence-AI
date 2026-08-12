@@ -79,6 +79,16 @@ export function SwipeDeck({ cards, interval = 2600 }: SwipeDeckProps) {
           const conectar = card.action === "connect";
           const fuera = arriba && saliendo && !reduce;
 
+          // Las de detrás avanzan un peldaño MIENTRAS la de arriba se va, no
+          // después. Si esperan a que termine, el hueco se llena de golpe al
+          // final y ese salto se lee como una pausa.
+          //
+          // La `key` sigue atada a la profundidad estructural, así que cuando
+          // el índice avanza React remonta cada tarjeta justo donde su
+          // animación ya la había dejado y el relevo no se ve.
+          const profundidadVisual =
+            saliendo && !reduce && !arriba ? profundidad - 1 : profundidad;
+
           return (
             <motion.article
               key={card.name + profundidad}
@@ -98,10 +108,10 @@ export function SwipeDeck({ cards, interval = 2600 }: SwipeDeckProps) {
                     }
                   : {
                       x: 0,
-                      y: profundidad * -18,
+                      y: profundidadVisual * -18,
                       rotate: 0,
-                      scale: 1 - profundidad * 0.05,
-                      opacity: 1 - profundidad * 0.25,
+                      scale: 1 - profundidadVisual * 0.05,
+                      opacity: 1 - profundidadVisual * 0.25,
                     }
               }
               transition={{ duration: SALIDA_MS / 1000, ease: [0.22, 1, 0.36, 1] }}
