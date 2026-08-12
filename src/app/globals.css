@@ -37,6 +37,11 @@
   --color-purple: #a97bf0;
   --color-sun: #ffd54a;
 
+  /* Tinta sobre los acentos claros. Blanco sobre mint no llega a 4.5:1, así
+     que estos son oscuros: son el par obligado de --color-mint/-purple. */
+  --color-on-mint: #06251f;
+  --color-on-purple: #1b0b2e;
+
   /* --- Paleta de datos (validada, orden fijo — nunca cíclico) ----------- */
   --color-data-1: #ff3b4f;
   --color-data-2: #2fa898;

@@ -1,19 +1,12 @@
 import Link from "next/link";
 
+import { Logo } from "@/components/shared/Logo";
+
 export default function AuthLayout({ children }: LayoutProps<"/">) {
   return (
     <main className="flex min-h-dvh flex-col px-5 py-8">
-      <Link
-        href="/"
-        className="mb-10 inline-flex w-fit items-center gap-2 text-lg font-extrabold tracking-tight"
-      >
-        <span
-          className="grid size-8 place-items-center rounded-chip bg-accent text-accent-ink"
-          aria-hidden="true"
-        >
-          B
-        </span>
-        BrandFluence
+      <Link href="/" className="mb-10 inline-flex w-fit">
+        <Logo size={32} />
       </Link>
 
       {/* Centrado vertical en móvil, con tope de ancho para escritorio */}

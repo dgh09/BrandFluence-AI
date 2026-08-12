@@ -206,3 +206,73 @@ describe("score total", () => {
     assert.ok(bueno.score > malo.score);
   });
 });
+
+/**
+ * La portada enseña cifras concretas como «ejemplo real del algoritmo». Si el
+ * algoritmo cambia y estos números no, la portada miente y nadie se entera:
+ * el resto del fichero comprueba el comportamiento, no los valores que la
+ * página tiene escritos. Estos tests son el sitio donde se nota.
+ *
+ * Si uno falla, hay que cambiar `src/app/page.tsx` — no el test.
+ */
+describe("cifras que la portada tiene escritas", () => {
+  /** Lucía: el perfil del ejemplo. Con bio, sin verificar → confianza 5. */
+  const lucia = creator({
+    niche: "fitness",
+    followerCount: 48_200,
+    engagementRate: 5.4,
+    isVerified: false,
+    fraudScore: null,
+    hasBio: true,
+  });
+
+  it("la bandeja de Lucía: 89,33 · 86,32 · 76,34", () => {
+    assert.equal(scoreMatch(lucia, campaign({ minFollowers: 10_000 })).score, 89.33);
+    assert.equal(scoreMatch(lucia, campaign({ minFollowers: 20_000 })).score, 86.32);
+    assert.equal(
+      scoreMatch(lucia, campaign({ targetNiche: "salud", minFollowers: 5_000 })).score,
+      76.34,
+    );
+  });
+
+  it("«Colección ropa técnica» no le sale a Lucía: es filtro duro, no nota baja", () => {
+    const result = scoreMatch(
+      lucia,
+      campaign({ targetNiche: "moda", minFollowers: 50_000 }),
+    );
+    assert.equal(result.eligible, false);
+  });
+
+  it("los candidatos del swipe: 89,33 · 77,36 · 46,93", () => {
+    const proteina = campaign({ targetNiche: "fitness", minFollowers: 10_000 });
+
+    assert.equal(scoreMatch(lucia, proteina).score, 89.33);
+
+    const andres = creator({
+      niche: "salud",
+      followerCount: 21_700,
+      engagementRate: 6,
+      isVerified: true,
+      fraudScore: null,
+      hasBio: true,
+    });
+    assert.equal(scoreMatch(andres, proteina).score, 77.36);
+
+    const lifestyle = creator({
+      niche: "lifestyle",
+      followerCount: 12_400,
+      engagementRate: 1.2,
+      isVerified: false,
+      fraudScore: null,
+      hasBio: false,
+    });
+    assert.equal(scoreMatch(lifestyle, proteina).score, 46.93);
+  });
+
+  it("los tres del swipe caen en el color que la portada enseña", () => {
+    // El umbral importa: 77,36 en verde y 46,93 en rojo es lo que hace legible
+    // «conectar» frente a «pasar» sin leer la cifra.
+    assert.ok(89.33 >= 75 && 77.36 >= 75, "los dos de conectar van en verde");
+    assert.ok(46.93 < 50, "el de pasar va en rojo");
+  });
+});

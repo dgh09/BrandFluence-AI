@@ -12,6 +12,8 @@ import {
   Users,
 } from "lucide-react";
 
+import { Logo } from "@/components/shared/Logo";
+
 type UserType = "creator" | "brand" | null;
 
 interface NavItem {
@@ -138,17 +140,8 @@ export function AppNav({
         aria-label="Navegación principal"
         className="fixed inset-y-0 left-0 z-50 hidden w-60 flex-col border-r border-line bg-surface px-4 py-6 md:flex"
       >
-        <Link
-          href="/dashboard"
-          className="mb-8 inline-flex items-center gap-2 px-2 text-lg font-extrabold tracking-tight"
-        >
-          <span
-            className="grid size-8 place-items-center rounded-chip bg-accent text-accent-ink"
-            aria-hidden="true"
-          >
-            B
-          </span>
-          BrandFluence
+        <Link href="/dashboard" className="mb-8 inline-flex w-fit px-2">
+          <Logo size={30} />
         </Link>
 
         <ul className="flex flex-col gap-1">

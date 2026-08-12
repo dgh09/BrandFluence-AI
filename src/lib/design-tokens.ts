@@ -26,6 +26,10 @@ export const colors = {
   mint: "#62D9C8",
   purple: "#A97BF0",
   sun: "#FFD54A",
+
+  /** Tinta sobre mint y púrpura: blanco encima no llega a 4.5:1. */
+  onMint: "#06251F",
+  onPurple: "#1B0B2E",
 } as const;
 
 /**

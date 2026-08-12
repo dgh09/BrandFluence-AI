@@ -708,7 +708,7 @@ La respuesta fácil a «mejorar la interfaz» es instalar shadcn/ui. Aquí se
 descartó, y el motivo es ese fichero de tokens: shadcn es Radix, que es solo
 DOM. Adoptarlo partiría el sistema de diseño justo por donde se decidió no
 partirlo, obligaría a mantener dos vocabularios de tokens y no aportaría nada
-visual — da componentes correctos, no llamativos. Las ocho primitivas de
+visual — da componentes correctos, no llamativos. Las nueve primitivas de
 `components/ui/` siguen escritas a mano.
 
 Lo único que entró fue `motion`, para animación. No toca los tokens.
@@ -728,28 +728,52 @@ pantallas de 8 bits. El ruido los disuelve.
 Lo que se gana es contraste de bordes. `--color-line` es `#26262A`, a un paso del
 fondo: sobre negro uniforme se perdía, y ahora tiene contra qué recortarse.
 
-### La portada enseña el algoritmo, no lo describe
+### La portada enseña el producto, no lo describe
 
-El `ScoreRing` es la pieza más reconocible del panel y en la portada no
-aparecía: había cuatro secciones de prosa explicando una puntuación que el
-visitante nunca llegaba a ver. Ahora el hero lleva a la derecha una tarjeta viva
-—anillo que cuenta, cuatro barras que se llenan, tres campañas rotando— con el
-desglose que devuelve `scoreMatch` para el perfil de Lucía.
+Había cuatro secciones de prosa explicando una puntuación que el visitante nunca
+llegaba a ver. Ahora el hero lleva a la derecha un `SwipeDeck`: tres candidatos
+ya puntuados que salen con el sello «Conectar» o «Pasar», en bucle. Es la única
+cosa que el usuario va a hacer de verdad, y la portada no la enseñaba.
 
-**No son cifras de relleno.** Si el algoritmo cambia, esa tarjeta miente, y
-`matching.test.ts` es donde se notaría.
+No es interactiva a propósito. Un carrusel que responde al ratón invita a jugar
+con él en vez de leer la página.
 
-Las barras llevan el color del anillo y no el coral de acción, porque son su
-desglose: la regla de las dos paletas dice que las marcas de datos no usan la de
-UI, y un anillo verde con barras coral leía como dos informaciones distintas.
+**Las cifras no son de relleno.** Las siete que la portada tiene escritas
+—89,33 · 86,32 · 76,34 en la bandeja de Lucía, 89,33 · 77,36 · 46,93 en las
+tarjetas, y «Colección ropa técnica» sin match— salen de `scoreMatch`. El
+desglose de `ScoreDot` redondea al mostrar, pero el valor que recibe es exacto.
 
-Con `prefers-reduced-motion`, `Reveal` devuelve sus hijos sin envolver. La regla
-global de `globals.css` solo desactiva animaciones de **CSS**, y estas son de
-JavaScript: sin esa rama, quien pide menos movimiento se quedaría el contenido
-invisible esperando una animación que nunca llega.
+Están **fijadas en `matching.test.ts`** (`describe("cifras que la portada tiene
+escritas")`). Sin eso, cambiar un peso del algoritmo dejaría la portada mintiendo
+sin que nada fallara: el resto del fichero comprueba el comportamiento, no los
+valores que la página tiene escritos. Si uno de esos tests falla, lo que hay que
+cambiar es `page.tsx`, no el test.
 
-> **Sin terminar.** Esta es una primera pasada y todavía no convence. Vive en la
-> rama `dev`; producción sigue con la portada anterior.
+La cuarta fila del ejemplo **no tiene nota**: una campaña de moda con mínimo de
+50.000 no le sale a Lucía con una puntuación baja, sencillamente no le sale. El
+filtro duro se enseña en la propia lista en vez de contarse en un párrafo aparte.
+
+Con `prefers-reduced-motion`, `Reveal` devuelve sus hijos sin envolver y el
+`SwipeDeck` se queda en una tarjeta ya conectada, sin bucle. La regla global de
+`globals.css` solo desactiva animaciones de **CSS**, y estas son de JavaScript:
+sin esa rama, quien pide menos movimiento se quedaría el contenido invisible
+esperando una animación que nunca llega.
+
+### El logotipo vive en un solo sitio
+
+Era un `<div>` coral con una «B» copiado en la portada, el sidebar del panel y la
+cabecera del alta. Al cambiar la marca al cubo hexagonal, eso garantizaba que
+alguno se quedara atrás, así que ahora es `components/shared/Logo.tsx` y el
+símbolo va en SVG en línea —cinco trazos— para que tome los colores de los
+tokens en vez de tenerlos escritos aparte.
+
+> **De dónde sale.** El rediseño se hizo en [Claude Design](https://claude.ai/design)
+> sobre un sistema extraído de este repositorio, y de ahí se tradujo a TSX y
+> Tailwind. Lo que llegó eran cifras redondeadas y una tarjeta de nicho `moda`
+> contra una campaña `fitness` — que el algoritmo nunca produce, porque no son
+> nichos afines. Ambas cosas están corregidas y verificadas contra `scoreMatch`.
+>
+> Vive en la rama `dev`; producción sigue con la portada anterior.
 
 ---
 
@@ -769,8 +793,9 @@ invisible esperando una animación que nunca llega.
 - [ ] Borrar de Storage los ficheros de una colaboración eliminada
 - [x] Notificaciones in-app
 - [x] Portada pública en la raíz
-- [ ] Rediseño de la portada — primera pasada en `dev`, todavía no convence
+- [ ] Rediseño de la portada — segunda pasada en `dev`, desde el sistema de diseño
 - [ ] Rediseño del panel por dentro — pendiente, después de la portada
+- [ ] Decidir si se cambia la paleta de acento — hoy sigue el coral `#FF3B4F`
 - [x] Desplegar en Vercel — [brand-fluence-ai.vercel.app](https://brand-fluence-ai.vercel.app)
 - [ ] Avisar fuera de la app (email o push) — hoy hay que entrar para enterarse
 - [ ] Verificar el email en el alta — hoy el enlace por email permite una toma de cuenta
