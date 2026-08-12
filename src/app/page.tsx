@@ -126,18 +126,14 @@ export default async function Home() {
         <header className="flex items-center justify-between gap-4">
           <Logo size={32} tagline />
 
-          {session?.user ? (
-            <Link href="/dashboard" className={`${pill} h-9 shrink-0 bg-surface-2 px-4 text-sm text-ink hover:bg-surface-3`}>
-              Ir al panel
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              className={`${pill} h-9 shrink-0 px-4 text-sm text-ink-secondary hover:text-ink`}
-            >
-              Entrar
-            </Link>
-          )}
+          {/* Los dos ocupan la misma ranura y hacen lo mismo —entrar en la
+              app—, así que van del mismo color. */}
+          <Link
+            href={session?.user ? "/dashboard" : "/login"}
+            className={`${pill} h-9 shrink-0 bg-accent px-4 text-sm text-accent-ink hover:bg-accent-hover active:scale-[0.98]`}
+          >
+            {session?.user ? "Ir al panel" : "Entrar"}
+          </Link>
         </header>
 
         {/* ---------------------------------------------------------------- */}
