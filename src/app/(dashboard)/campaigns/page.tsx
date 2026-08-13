@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Megaphone } from "lucide-react";
 
 import { CampaignForm } from "@/components/campaigns/CampaignForm";
+import { CampaignStatusBadge } from "@/components/campaigns/CampaignStatusBadge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { auth } from "@/lib/auth";
@@ -48,9 +49,7 @@ export default async function CampaignsPage() {
                       : ""}
                   </p>
                 </div>
-                <span className="shrink-0 rounded-pill bg-surface-2 px-3 py-1 text-xs font-medium text-ink-secondary">
-                  {campaign.status}
-                </span>
+                <CampaignStatusBadge status={campaign.status} />
               </div>
 
               {campaign.description ? (
