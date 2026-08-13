@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Compass, Handshake, Megaphone, Send, Sparkles, Users } from "lucide-react";
+import { Compass, Handshake, Megaphone, Plus, Send, Sparkles, Users } from "lucide-react";
 
+import { CampaignStatusBadge } from "@/components/campaigns/CampaignStatusBadge";
 import { MatchCard } from "@/components/dashboard/MatchCard";
 import { Button } from "@/components/ui/Button";
 import { Card, StatTile } from "@/components/ui/Card";
@@ -12,6 +13,7 @@ import { auth } from "@/lib/auth";
 import { formatCOP } from "@/lib/currency";
 import { formatCount } from "@/lib/numbers";
 import { getBrandDashboard, getCreatorDashboard } from "@/lib/queries/dashboard";
+import { industryLabel, nicheLabel } from "@/lib/taxonomy";
 
 export const metadata: Metadata = { title: "Inicio" };
 
@@ -34,9 +36,23 @@ export default async function DashboardPage() {
             {userType === "brand" ? "Tus campañas" : "Tus oportunidades"}
           </h1>
         </div>
-        <Button size="sm" icon={<Compass size={16} />}>
-          Explorar
-        </Button>
+        {/* La acción de cabecera cambia con el rol, porque «explorar» no
+            significa lo mismo para quien busca campañas que para quien las
+            publica. Antes era un botón suelto, igual para los dos y sin
+            destino: se pulsaba y no pasaba nada. */}
+        {userType === "brand" ? (
+          <Link href="/campaigns">
+            <Button size="sm" icon={<Plus size={16} />}>
+              Nueva campaña
+            </Button>
+          </Link>
+        ) : (
+          <Link href="/matches">
+            <Button size="sm" icon={<Compass size={16} />}>
+              Explorar
+            </Button>
+          </Link>
+        )}
       </header>
 
       {userType === "brand" ? (
@@ -100,7 +116,7 @@ async function CreatorView({ userId }: { userId: string }) {
         icon={<Handshake size={16} />}
         hint={
           data.niche
-            ? `Nicho: ${data.niche} · ${formatCount(data.followerCount)} seguidores`
+            ? `Nicho: ${nicheLabel(data.niche) ?? data.niche} · ${formatCount(data.followerCount)} seguidores`
             : "Añade tu nicho para mejorar el matching"
         }
       />
@@ -164,7 +180,11 @@ async function BrandView({ userId }: { userId: string }) {
       <StatTile
         label="Presupuesto en campañas activas"
         value={formatCOP(data.totalBudget)}
-        hint={data.industry ? `Sector: ${data.industry}` : undefined}
+        hint={
+          data.industry
+            ? `Sector: ${industryLabel(data.industry) ?? data.industry}`
+            : undefined
+        }
       />
 
       <section>
@@ -186,9 +206,7 @@ async function BrandView({ userId }: { userId: string }) {
                       : ""}
                   </p>
                 </div>
-                <span className="shrink-0 rounded-pill bg-surface-2 px-3 py-1 text-xs font-medium text-ink-secondary">
-                  {campaign.status}
-                </span>
+                <CampaignStatusBadge status={campaign.status} />
               </Card>
             ))}
           </div>
