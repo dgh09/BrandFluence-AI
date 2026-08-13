@@ -780,6 +780,25 @@ mancha. Se genera con `scripts/favicon.ps1`, sin dependencias.
 > contra una campaña `fitness` — que el algoritmo nunca produce, porque no son
 > nichos afines. Ambas cosas están corregidas y verificadas contra `scoreMatch`.
 
+### El panel no tiene rediseño esperando
+
+El sistema de diseño se extrajo **de este repositorio**, así que su kit del panel
+es una recreación de `src/app/(dashboard)/` —lo dice su propio README— y no una
+propuesta nueva: mismos filtros, mismos rótulos y párrafos calcados palabra por
+palabra. En varios sitios además es más pobre que lo que hay aquí; su detalle de
+colaboración se deja el brief, el cierre, el método de pago y el estado
+*cancelada*. Traducirlo habría hecho retroceder el panel.
+
+Con la portada no pasaba, porque ahí sí había diseño nuevo. La distinción vale
+para el siguiente kit que llegue: **conviene comprobar si trae algo que el
+repositorio no tenga ya** antes de tratarlo como trabajo pendiente.
+
+Lo que sí salió de mirar el panel con atención fueron tres defectos que ni los
+tipos ni los tests veían: un botón «Explorar» sin destino en la cabecera del
+inicio, los estados de campaña en inglés y la taxonomía en crudo —«Sector:
+deporte» en vez de «Deporte y fitness»—, con las funciones de etiqueta ya
+escritas y sin usar.
+
 ---
 
 ## Hoja de ruta
@@ -799,7 +818,7 @@ mancha. Se genera con `scripts/favicon.ps1`, sin dependencias.
 - [x] Notificaciones in-app
 - [x] Portada pública en la raíz
 - [x] Rediseño de la portada — desde el sistema de diseño, con la demo del swipe
-- [ ] Rediseño del panel por dentro — pendiente, después de la portada
+- [ ] Rediseño del panel por dentro — sin material todavía: el kit de diseño resultó ser un espejo del panel ya desplegado
 - [ ] Decidir si se cambia la paleta de acento — hoy sigue el coral `#FF3B4F`
 - [x] Desplegar en Vercel — [brand-fluence-ai.vercel.app](https://brand-fluence-ai.vercel.app)
 - [ ] Avisar fuera de la app (email o push) — hoy hay que entrar para enterarse
