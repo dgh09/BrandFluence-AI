@@ -10,7 +10,7 @@ Matching con IA para campañas UGC.
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
-[![Tests](https://img.shields.io/badge/tests-81%20passing-2FA898)](#tests)
+[![Tests](https://img.shields.io/badge/tests-85%20passing-2FA898)](#tests)
 [![Estado](https://img.shields.io/badge/estado-MVP%20en%20desarrollo-FF3B4F)](#estado-del-proyecto)
 
 </div>
@@ -587,6 +587,7 @@ el uso del pooler si sube el tráfico.
 | `node scripts/check-sql-params.mjs` | Verifica los parámetros de cada consulta |
 | `node scripts/check-storage.mjs --setup` | Crea los buckets de Storage |
 | `node scripts/check-storage.mjs` | Sube, lee y borra un fichero de prueba |
+| `node scripts/check-rls.mjs` | Que `public` no esté publicado por PostgREST |
 
 > `seed-demo.mjs --clean` borra los usuarios de demo y todo lo que cuelga de
 > ellos, pero **no** los ficheros que hubiera en Storage. Está en la hoja de ruta.
@@ -595,8 +596,8 @@ el uso del pooler si sube el tráfico.
 
 ```
 ✓ 51 consultas revisadas, todas cuadran
-# tests 81
-# pass 81
+# tests 85
+# pass 85
 # fail 0
 ```
 
@@ -667,6 +668,64 @@ database/
 - **Un recurso con dos dueños se resuelve igual.** Una colaboración es del creador *y* de la marca, y cada uno puede hacer cosas distintas. En vez de repartir esa regla entre la ruta y la consulta —dos sitios que un día dejan de coincidir—, está entera en el `WHERE`. Consultar una colaboración ajena devuelve cero filas y la página responde el mismo 404 que si no existiera: no se puede averiguar qué hay probando identificadores.
 - **La unicidad se resuelve capturando la violación de constraint**, no con un `SELECT` previo, que dejaría una ventana de carrera entre la lectura y la escritura.
 - Las contraseñas se guardan con bcrypt (coste 12). Los logins fallidos comparan contra un hash señuelo para que el tiempo de respuesta no revele si el email existe.
+
+### La puerta que nadie miraba: Postgres tiene una segunda entrada
+
+El 17 de agosto de 2026 Supabase avisó por correo de un
+`rls_disabled_in_public` sobre `notifications`. Era verdad, y lo interesante
+es por qué existía.
+
+Toda la autorización de esta app está en los `WHERE` de las consultas, y eso
+está bien **para el camino que pasa por la app**. Pero Supabase publica el
+schema `public` por PostgREST en `https://<ref>.supabase.co/rest/v1/`, con el
+rol `anon` teniendo SELECT, INSERT, UPDATE y DELETE sobre cada tabla. Esa es
+una segunda entrada a la misma base que no pasa por `src/` en absoluto: ni un
+`WHERE` de este repositorio la vigila.
+
+La llave de esa entrada es `NEXT_PUBLIC_SUPABASE_ANON_KEY`. El prefijo lo
+dice todo: `MediaUpload` es un componente de cliente, así que la clave va
+dentro del bundle del sitio desplegado. No es un secreto, y no puede serlo.
+
+Lo único que separaba los datos de internet era RLS. Once tablas lo tenían
+—activado a mano en el panel de Supabase, sin políticas, que es deny-all—,
+pero `notifications` la creó la migración 004 y nadie volvió al panel. Nació
+abierta. Siete filas que cualquiera con la clave del bundle podía leer,
+reescribir o **borrar**.
+
+**El fallo de fondo no era la tabla, era dónde vivía la decisión.** Estando
+solo en el dashboard, cada migración futura tenía que acordarse. Por eso
+`migrations/005_rls.sql` no hace un `ALTER TABLE notifications` y ya:
+
+1. Recorre el schema y activa RLS en **toda** tabla que no lo tenga.
+2. Le **quita a `anon` y `authenticated` los privilegios** sobre `public`,
+   incluidos los `ALTER DEFAULT PRIVILEGES` que hacen que una tabla recién
+   creada aparezca publicada. Esto es lo que impide la reincidencia: una
+   tabla futura que se olvide de RLS responde igual `permission denied`.
+3. Lo mismo entró en `schema.sql`, para que un proyecto nuevo no nazca
+   abierto.
+
+Sin políticas, a propósito. La app no lee por PostgREST —va por `pg` con
+`DATABASE_URL`—, así que una política no le daría acceso a nadie que lo
+necesite y sí describiría un modelo de permisos paralelo al que ya está en
+las consultas. Dos sitios que un día dejan de coincidir.
+
+Y **sin `FORCE ROW LEVEL SECURITY`**, que es la trampa: el dueño de la tabla
+se salta RLS, y la app se conecta justamente como `postgres`, el dueño.
+Forzarlo dejaría el sitio entero en cero filas.
+
+Comprobado desde fuera con la clave del bundle, antes y después. Antes,
+`notifications` devolvía `HTTP 200` con filas reales; ahora las doce tablas
+responden `HTTP 401 permission denied`, y también el `DELETE`. La subida del
+navegador sigue funcionando: usa `uploadToSignedUrl` con un permiso que firma
+el servidor, y Storage vive en el schema `storage`, que esto no toca.
+
+> **Lo que esto dice de las cuatro capas.** Ninguna de las cuatro podía cazar
+> esto, y conviene entender por qué: las cuatro comprueban **el camino que
+> pasa por la app**. Una tabla publicada a internet no es un camino que la
+> app recorra, así que no hay test de la app que falle. El aviso llegó por
+> correo. La lección no es añadir una quinta capa, es que la configuración de
+> la plataforma es código y tiene que vivir en el repositorio: mientras
+> estuvo en el dashboard, no había nada que revisar en un diff.
 
 ### Una puerta que sigue abierta: el alta no verifica el email
 
@@ -821,6 +880,7 @@ escritas y sin usar.
 - [ ] Rediseño del panel por dentro — sin material todavía: el kit de diseño resultó ser un espejo del panel ya desplegado
 - [ ] Decidir si se cambia la paleta de acento — hoy sigue el coral `#FF3B4F`
 - [x] Desplegar en Vercel — [brand-fluence-ai.vercel.app](https://brand-fluence-ai.vercel.app)
+- [x] Cerrar PostgREST — RLS en todo `public` y sin privilegios para `anon`
 - [ ] Avisar fuera de la app (email o push) — hoy hay que entrar para enterarse
 - [ ] Verificar el email en el alta — hoy el enlace por email permite una toma de cuenta
 - [ ] Cobro real con pasarela (Wompi o Mercado Pago) y comisión

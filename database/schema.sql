@@ -248,3 +248,46 @@ BEGIN
        FOR EACH ROW EXECUTE FUNCTION set_updated_at()', t);
   END LOOP;
 END $$;
+
+-- ============================================================================
+-- 6. RLS — sin esto el proyecto nace publicado
+-- ============================================================================
+--
+-- Supabase sirve el schema `public` por PostgREST y le concede al rol `anon`
+-- privilegios completos sobre cada tabla. La clave `anon` viaja en el bundle
+-- del navegador (Storage la necesita), así que no es un secreto: lo único
+-- que separa los datos de internet es RLS.
+--
+-- Esto NO puede quedarse en el panel de Supabase. Ya pasó una vez: las
+-- primeras tablas se protegieron a mano, la migración 004 creó
+-- `notifications` sin que nadie volviera al panel, y estuvo abierta hasta
+-- que lo avisó Supabase por correo. Ver migrations/005_rls.sql.
+--
+-- Deny-all y sin políticas: la app no lee por PostgREST, va por `pg` con
+-- DATABASE_URL. Y sin FORCE, porque se conecta como `postgres`, que es el
+-- dueño de las tablas y por eso se salta RLS. Forzarlo dejaría el sitio en
+-- cero filas.
+
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOR t IN
+    SELECT c.relname FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+     WHERE n.nspname = 'public' AND c.relkind = 'r' AND NOT c.relrowsecurity
+  LOOP
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
+  END LOOP;
+END $$;
+
+-- La segunda cerradura, y la que protege a las tablas que aún no existen:
+-- sin privilegios, una tabla futura que se olvide de RLS responde igual
+-- permission denied. `service_role` conserva los suyos (src/lib/storage.ts).
+REVOKE ALL ON ALL TABLES    IN SCHEMA public FROM anon, authenticated;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated;
+REVOKE ALL ON SCHEMA public FROM anon, authenticated;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  REVOKE ALL ON TABLES FROM anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  REVOKE ALL ON SEQUENCES FROM anon, authenticated;
