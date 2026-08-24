@@ -84,8 +84,12 @@
   --color-graphite: #5e5e63; /* anotación y metadatos sobre papel — 5,1:1 */
 
   /* El mismo coral, oscurecido para el papel. NO es un segundo acento:
-     #FF3B4F sobre #EAE8E3 se queda en 2,8:1 y no se puede usar para texto. */
-  --color-accent-print: #d42237; /* 4,6:1 sobre papel */
+     #FF3B4F sobre #EAE8E3 se queda en 2,8:1 y no se puede usar para texto.
+
+     Medido, no estimado: 4,68:1 sobre #EAE8E3. El valor anterior (#D42237)
+     daba 4,20:1 y no llegaba a AA — el comentario decía 4,6:1 y era falso.
+     Donde se veía: las notas con check de la ficha y el sello «sin match». */
+  --color-accent-print: #c81c2e;
 
   /* --- Las tres caras --------------------------------------------------- */
   --font-display: var(--font-archivo), "Archivo Narrow", ui-sans-serif,

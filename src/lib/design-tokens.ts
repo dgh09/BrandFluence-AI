@@ -45,8 +45,8 @@ export const colors = {
   print: "#17171A",
   /** Anotación y metadatos sobre papel. 5,1:1. */
   graphite: "#5E5E63",
-  /** El mismo coral, oscurecido para papel: el de UI se queda en 2,8:1. */
-  accentPrint: "#D42237",
+  /** El mismo coral, oscurecido para papel. 4,68:1; el de UI da 2,8:1. */
+  accentPrint: "#C81C2E",
 } as const;
 
 /**
