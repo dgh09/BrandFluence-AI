@@ -1,53 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import {
-  Big_Shoulders,
-  Faustina,
-  Martian_Mono,
-  Plus_Jakarta_Sans,
-} from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-/** La cara del panel. Sigue mandando en la aplicación entera. */
+/**
+ * La cara del panel, y la única que se declara aquí.
+ *
+ * Las tres caras de la portada (Big Shoulders, Faustina, Martian Mono) viven
+ * en `page.tsx`, no en este layout, y no es una cuestión de orden: declaradas
+ * aquí, Next las precargaba en TODAS las rutas. Medido contra el build de
+ * producción, `/login` pedía cuatro ficheros `.woff2` para usar uno solo, y el
+ * panel entero igual. Declaradas en la página, solo las pide quien las usa.
+ */
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
   subsets: ["latin"],
-  display: "swap",
-});
-
-/**
- * Display. Grotesca comprimida de rotulación, con caja baja de verdad.
- * `axes: ["opsz"]` trae el tamaño óptico (10–72): a cuerpo de titular la cara
- * afina los trazos por sí sola, que es la diferencia entre una condensada de
- * rótulo y una normal apretada a mano.
- */
-const shoulders = Big_Shoulders({
-  variable: "--font-shoulders",
-  subsets: ["latin"],
-  axes: ["opsz"],
-  display: "swap",
-  // Next no tiene métricas de sustitución para esta cara y avisa de que no
-  // genera respaldo ajustado, así que el respaldo se declara a mano: una
-  // condensada de sistema, para que el salto al cargar la cara real sea de
-  // milímetros y no de renglones.
-  fallback: ["Arial Narrow", "Helvetica Neue Condensed", "Arial", "sans-serif"],
-});
-
-/** Cuerpo. Serif de texto: la prosa vive sobre papel claro. */
-const faustina = Faustina({
-  variable: "--font-faustina",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-/**
- * Utilidad. Monoespaciada con eje de anchura, que se usa condensada al 80%:
- * las etiquetas van en versalitas y a la misma talla que el cuerpo, así que
- * tienen que ocupar menos para que la talla única no reviente las columnas.
- */
-const martian = Martian_Mono({
-  variable: "--font-martian",
-  subsets: ["latin"],
-  axes: ["wdth"],
   display: "swap",
 });
 
@@ -102,10 +68,7 @@ provenance
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="es"
-      className={`${jakarta.variable} ${shoulders.variable} ${faustina.variable} ${martian.variable} h-full`}
-    >
+    <html lang="es" className={`${jakarta.variable} h-full`}>
       <body className="min-h-full flex flex-col bg-canvas text-ink">
         <div hidden dangerouslySetInnerHTML={{ __html: CONTRATO }} />
         {children}

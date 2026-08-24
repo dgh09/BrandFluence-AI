@@ -91,14 +91,8 @@
      «faltan …» y el «audiencia: 48.200 < 50.000» son texto normal de 17px. */
   --color-accent-print: #c81c2e;
 
-  /* --- Las tres caras --------------------------------------------------- */
-  /* Los nombres de `next/font` (--font-shoulders, --font-faustina,
-     --font-martian) son distintos a propósito: si la variable del tema se
-     llamara igual que la que inyecta la cara, `<html>` pisaría al tema y la
-     tipografía se caería al fallback sin avisar. */
-  --font-display: var(--font-shoulders), ui-sans-serif, system-ui, sans-serif;
-  --font-body: var(--font-faustina), Georgia, serif;
-  --font-utility: var(--font-martian), ui-monospace, monospace;
+  /* Las tres caras NO se declaran aquí: ver el bloque `.hoja-calificada` más
+     abajo, que explica por qué en `@theme` no funcionan. */
 
   /* --- Los tres tamaños, y no hay un cuarto ----------------------------- */
   --text-score: clamp(4.5rem, 12vw, 9.5rem);
@@ -107,6 +101,30 @@
   --text-display--line-height: 0.94;
   --text-base: 1.0625rem;
   --text-base--line-height: 1.65;
+}
+
+/* ---------------------------------------------------------------------------
+   Dónde se atan las tres caras, y por qué no en `@theme`
+
+   Las variables de `next/font` (`--font-shoulders`, `--font-faustina`,
+   `--font-martian`) se aplican al div raíz de la portada, no a `<html>`, para
+   que el panel no acabe precargando tres fuentes que no usa.
+
+   Eso obliga a atarlas aquí y no en `@theme`. Una propiedad personalizada
+   resuelve sus `var()` en el elemento donde está DECLARADA: un
+   `--font-display: var(--font-shoulders)` declarado en `:root` intenta leer
+   `--font-shoulders` en `:root`, donde no existe, y se queda en un valor
+   inválido que se hereda roto por toda la página. Se vio en el build de
+   producción, con la portada entera en las caras de respaldo.
+
+   Declaradas aquí, en el mismo elemento que trae las variables de las caras,
+   resuelven.
+   --------------------------------------------------------------------------- */
+.hoja-calificada {
+  --font-display: var(--font-shoulders), "Arial Narrow", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-body: var(--font-faustina), Georgia, "Times New Roman", serif;
+  --font-utility: var(--font-martian), ui-monospace, "Courier New", monospace;
 }
 
 .display {

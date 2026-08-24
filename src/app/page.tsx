@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Big_Shoulders, Faustina, Martian_Mono } from "next/font/google";
 
 import { auth } from "@/lib/auth";
 import { Logo } from "@/components/shared/Logo";
@@ -26,9 +27,63 @@ import { formatScore } from "@/lib/numbers";
    FINISH: unreviewed and undocumented is unfinished.
    --------------------------------------------------------------------------- */
 
+/* ---------------------------------------------------------------------------
+   Las tres caras del documento
+
+   Se declaran aquí y no en el layout raíz, y la diferencia se midió contra el
+   build de producción: en el layout, Next las precargaba en TODAS las rutas y
+   `/login` pedía cuatro ficheros `.woff2` para usar uno solo. Aquí no las pide
+   nadie más que la portada.
+
+   Se probó también un layout de segmento en un grupo `(landing)`, que es el
+   sitio canónico. No se quedó: no devolvía la precarga a `/` —esa ruta es
+   dinámica porque lee la sesión, y Next solo precarga fuentes en rutas
+   prerenderizadas— y en cambio metía al titular en la plantilla de título del
+   layout raíz, dejando «BrandFluence AI · Cada match, con su porqué ·
+   BrandFluence AI». Un fichero más y una regresión a cambio de nada.
+   --------------------------------------------------------------------------- */
+
+/**
+ * Display. Grotesca comprimida de rotulación, con caja baja de verdad.
+ * `axes: ["opsz"]` trae el tamaño óptico (10–72): a cuerpo de titular la cara
+ * afina los trazos sola, que es la diferencia entre una condensada de rótulo y
+ * una normal apretada a mano.
+ */
+const shoulders = Big_Shoulders({
+  variable: "--font-shoulders",
+  subsets: ["latin"],
+  axes: ["opsz"],
+  display: "swap",
+  // Next no tiene métricas de sustitución para esta cara y avisa de que no
+  // genera respaldo ajustado, así que el respaldo se declara a mano: una
+  // condensada de sistema, para que el salto al cargar la cara real sea de
+  // milímetros y no de renglones.
+  fallback: ["Arial Narrow", "Helvetica Neue Condensed", "Arial", "sans-serif"],
+});
+
+/** Cuerpo. Serif de texto: la prosa vive sobre papel claro. */
+const faustina = Faustina({
+  variable: "--font-faustina",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+/**
+ * Utilidad. Monoespaciada con eje de anchura, que se usa condensada al 80%:
+ * las etiquetas van en versalitas y a la misma talla que el cuerpo, así que
+ * tienen que ocupar menos para que la talla única no reviente las columnas.
+ */
+const martian = Martian_Mono({
+  variable: "--font-martian",
+  subsets: ["latin"],
+  axes: ["wdth"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   // El layout raíz añade el sufijo « · BrandFluence AI» a los demás títulos;
-  // en la portada sobra repetirlo.
+  // en la portada sobra repetirlo, y como esta página es el segmento raíz la
+  // plantilla no le aplica.
   title: "BrandFluence AI · Cada match, con su porqué",
   description:
     "BrandFluence AI puntúa cada pareja creador–campaña del 0 al 100 y explica de dónde sale cada punto. Matching con IA para campañas UGC en Colombia.",
@@ -127,7 +182,9 @@ export default async function Home() {
     // elevación; aquí subía el fondo a #161617 en la primera pantalla y era,
     // además, la única fuente de luz centrada de una página cuyo contrato dice
     // que nada se centra. El grano se queda.
-    <div className="hoja-calificada relative">
+    <div
+      className={`${shoulders.variable} ${faustina.variable} ${martian.variable} hoja-calificada relative`}
+    >
       <TornDefs />
 
       {/* La malla animada es el suelo de la portada entera, no la textura del
