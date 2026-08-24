@@ -1,0 +1,491 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-24T00:00:00.000Z",
+  "title": "Design System: BrandFluence AI — La hoja calificada",
+  "extensions": {
+    "scope": {
+      "documents": "The landing surface only: route `/`, `src/components/landing/`, and the second `@theme` block in `src/app/globals.css` (opening at the comment \"La hoja calificada\").",
+      "excludes": "The incumbent dark panel system (--color-canvas/--color-surface*/--color-line*/--color-ink*, --color-data-1..4, --radius-chip/tile/card/pill, Plus Jakarta Sans) used by /dashboard and the rest of the app. Two visual systems ship side by side on purpose; landing rules do not apply to the panel.",
+      "shared": [
+        "#0B0B0C ground",
+        "#FF3B4F / #FF5566 UI coral",
+        "the film-grain overlay on body"
+      ]
+    },
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#0B0B0C",
+        "note": "The ground the whole surface is torn out of. Flat here: the landing cancels the panel's radial glow via body:has(.hoja-calificada). Shared with the panel system.",
+        "tonalRamp": [
+          "#000000",
+          "#0B0B0C",
+          "#1A1A1C",
+          "#2E2E31",
+          "#4A4A4E",
+          "#75757A",
+          "#A9A9AD",
+          "#D8D8DB"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Bond Paper",
+        "canonical": "#F0EDE4",
+        "note": "Every sheet, and the ink for the little text that sits directly on the ground (headings, CTA labels, footer line).",
+        "tonalRamp": [
+          "#26241E",
+          "#3D3A32",
+          "#5A5648",
+          "#7A7566",
+          "#9C9788",
+          "#BEB9AA",
+          "#D8D4C8",
+          "#F0EDE4"
+        ]
+      },
+      "print": {
+        "role": "neutral",
+        "displayName": "Printed Black",
+        "canonical": "#131316",
+        "note": "Everything printed on paper (15:1) including the score and the score bars; also the text colour on coral fields.",
+        "tonalRamp": [
+          "#08080A",
+          "#131316",
+          "#232327",
+          "#3A3A3F",
+          "#57575D",
+          "#7F7F86",
+          "#AFAFB5",
+          "#DEDEE2"
+        ]
+      },
+      "pencil": {
+        "role": "neutral",
+        "displayName": "Pencil",
+        "canonical": "#63615C",
+        "note": "The single grey. Paper only — 5.2:1 on paper, 3.16:1 on ink (fails AA). Units, subject meta, explanatory prose.",
+        "tonalRamp": [
+          "#1F1E1C",
+          "#33322F",
+          "#4A4844",
+          "#63615C",
+          "#807E78",
+          "#A09E97",
+          "#C2C0B9",
+          "#E2E0DA"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Correction Coral",
+        "canonical": "#FF3B4F",
+        "note": "Ink-ground only: primary CTA fill (with printed ink as label), the rubric marquee band, ::selection, caret, scrollbar thumb, every focus-visible outline.",
+        "tonalRamp": [
+          "#3B0009",
+          "#5E0714",
+          "#851220",
+          "#AC1E2D",
+          "#D22B3C",
+          "#FF3B4F",
+          "#FF7C88",
+          "#FFC0C6"
+        ]
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "Correction Coral (hover)",
+        "canonical": "#FF5566",
+        "note": "The only state variant of the UI coral.",
+        "tonalRamp": [
+          "#3E0410",
+          "#620E1B",
+          "#891A28",
+          "#B02636",
+          "#D63A4C",
+          "#FF5566",
+          "#FF8F9B",
+          "#FFCCD2"
+        ]
+      },
+      "accent-print": {
+        "role": "primary",
+        "displayName": "Printed Coral",
+        "canonical": "#C81C2E",
+        "note": "Not a second accent: the same coral darkened until it reaches AA on bond paper (4.87:1 vs 2.8:1 for the UI coral). Carries every correction mark on a sheet.",
+        "tonalRamp": [
+          "#2E040A",
+          "#4C0912",
+          "#6C111C",
+          "#8E1624",
+          "#C81C2E",
+          "#E44357",
+          "#F17F8B",
+          "#F9C2C8"
+        ]
+      },
+      "ink-wash": {
+        "role": "neutral",
+        "displayName": "Ink Wash",
+        "canonical": "#0B0B0C, #232329, #3D3D46, #55555F",
+        "note": "A four-step ink ramp passed to the shader ground as JS props. Lives ONLY in src/lib/design-tokens.ts as `inkWash`: no CSS rule reads it, so the Mirrored Token Rule does not apply and matching custom properties must not be added to globals.css. All four steps are ink; a coral field behind the page would turn the accent into decoration. The ramp is deliberately wide (it began three times narrower and could not be seen) and its top step is capped by contrast, not taste: paper text #F0EDE4 on #55555F measures 6.0:1, so headings over the ground still pass AA at the brightest moment of the animation. Any future widening must hold that measurement.",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#161619",
+          "#232329",
+          "#2F2F37",
+          "#3D3D46",
+          "#4A4A54",
+          "#55555F",
+          "#6E6E79"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "score": {
+        "displayName": "Score",
+        "purpose": "The match score and nothing else. The one element allowed to break the size ladder; that is why it reads."
+      },
+      "display": {
+        "displayName": "Display",
+        "purpose": "h1 and every section h2, always lowercase, plus the struck-through campaign name. Optical sizing is automatic."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All prose. Measure capped by line length: max-w-xl (36rem) for explanatory prose, max-w-md (28rem) for lead paragraphs."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Every label, unit, metric, stamp, button, nav link, deficit and the footer line. Same size as body; the 80% width axis is what makes one size survive in columns."
+      }
+    },
+    "fonts": [
+      {
+        "name": "Big Shoulders",
+        "role": "display",
+        "cssVar": "--font-shoulders",
+        "axes": [
+          "opsz"
+        ],
+        "fallback": "Arial Narrow, Helvetica Neue Condensed, Arial, sans-serif",
+        "note": "Fallback declared by hand: Next has no substitution metrics for this face."
+      },
+      {
+        "name": "Faustina",
+        "role": "body",
+        "cssVar": "--font-faustina",
+        "fallback": "Georgia, serif"
+      },
+      {
+        "name": "Martian Mono",
+        "role": "utility",
+        "cssVar": "--font-martian",
+        "axes": [
+          "wdth"
+        ],
+        "fallback": "ui-monospace, monospace",
+        "note": "Always used at font-stretch 80%."
+      }
+    ],
+    "shadows": [],
+    "motion": [
+      {
+        "name": "reveal",
+        "value": "opacity 0→1, translateY 16px→0 over 0.5s cubic-bezier(0.22, 1, 0.36, 1), once, viewport margin -80px",
+        "purpose": "The only scroll motion. Siblings stagger by 0.08s. Under prefers-reduced-motion the wrapper is skipped entirely and children render already visible — the global CSS reduce override cannot reach a JS animation."
+      },
+      {
+        "name": "desfile",
+        "value": "@keyframes desfile { from { transform: translateX(0) } to { transform: translateX(-50%) } } — 34s linear infinite",
+        "purpose": "The rubric marquee. Declared inside @media (prefers-reduced-motion: no-preference) rather than relying on the global reduce override, which would shorten it to 0.01ms and freeze it mid-travel."
+      },
+      {
+        "name": "shader-ground",
+        "value": "MeshGradient speed={0.3} distortion={1.1} swirl={0.7} grainOverlay={0}; reduced motion: speed={0} frame={9000}",
+        "purpose": "The third and last motion: an ink-only WebGL mesh wash on a viewport-fixed layer behind the entire page. Speed, distortion and swirl were raised from a far quieter earlier setting because the ground was not legible as motion at all. Under prefers-reduced-motion it freezes on a fixed frame rather than disappearing, driven by useReducedMotion from motion/react. VERIFIED AT SOURCE LEVEL ONLY - the browser session could not emulate the media query, so no capture proves the freeze."
+      },
+      {
+        "name": "reduce-override",
+        "value": "@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important } }",
+        "purpose": "Global CSS motion kill switch. Covers CSS only; JS animation must branch itself."
+      },
+      {
+        "name": "state-transition",
+        "value": "transition: color, background-color",
+        "purpose": "Hover and focus are colour-only. No transform transitions except a 1px active nudge on buttons."
+      },
+      {
+        "name": "reduced-motion-branching",
+        "value": "CSS animation gated inside no-preference; JS animation branches and returns children unwrapped; shader takes a frozen frame",
+        "purpose": "Reduced motion is honoured once per mechanism. A new motion must pick the branch matching its mechanism; the global CSS override alone is never sufficient."
+      }
+    ],
+    "filters": [
+      {
+        "name": "rasgado",
+        "value": "<filter id=\"rasgado\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\" primitiveUnits=\"userSpaceOnUse\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.012 0.09\" numOctaves=\"4\" seed=\"23\" result=\"fibra\"/><feDisplacementMap in=\"SourceGraphic\" in2=\"fibra\" scale=\"8\" xChannelSelector=\"R\" yChannelSelector=\"G\"/></filter>",
+        "purpose": "The torn sheet edge. Declared once per document; consumed by every Paper background layer only, never by content. Asymmetric baseFrequency on purpose: equal axes scallop like a stamp."
+      },
+      {
+        "name": "grain",
+        "value": "body::after { position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0.035; background-image: feTurbulence fractalNoise baseFrequency 0.8 numOctaves 3 }",
+        "purpose": "Film grain above all content. Breaks flatness and kills banding without touching legibility. Shared with the panel system."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "container",
+        "value": "max-w-6xl (72rem) with a 1.25rem gutter"
+      },
+      {
+        "name": "floor",
+        "value": "360px"
+      }
+    ],
+    "rasterAssets": {
+      "count": 0,
+      "note": "This surface ships zero raster assets. Grain, torn edges, strikethrough, underlines, bars, ticks and stamp are all CSS and inline SVG. There is no provenance to record because there is no image."
+    },
+    "tokenMirror": {
+      "files": [
+        "src/app/globals.css (second @theme block)",
+        "src/lib/design-tokens.ts"
+      ],
+      "rule": "Colour tokens are duplicated on purpose: a future Expo app cannot read CSS custom properties. A colour change that lands in only one of the two files is a defect. Change both, in the same commit."
+    },
+    "shaders": [
+      {
+        "name": "ShaderGround",
+        "library": "@paper-design/shaders-react 0.0.80 (MeshGradient)",
+        "file": "src/components/ui/ShaderGround.tsx",
+        "scope": "Takes no children; renders once near the top of src/app/page.tsx as a viewport-fixed full-page layer behind everything. Replaced an earlier hero-only wrapper (HeroShader), which is deleted.",
+        "colors": "inkWash - ink only, top step bounded by contrast (paper text 6.0:1 on #55555F). Any future shader on this surface inherits the constraint.",
+        "costCap": {
+          "props": "maxPixelCount={1_600_000} minPixelRatio={1}",
+          "uncapped": "3441x2411 (8.3 MP) at devicePixelRatio 1, animation loop at 16 fps",
+          "capped_desktop": "1.6 MP at 52 fps on 1440x900",
+          "capped_phone": "0.44 MP at dpr 2 on a 360px viewport",
+          "note": "The library default is unbounded. Anyone adding a shader here must set both props."
+        },
+        "grainOverlay": "0 — the page already paints its own grain in body::after; the shader's would double it.",
+        "provenance": "An amendment the user made to their own brief, whose motion clause had allowed only the reveal and the marquee. Recorded because it ships; not a precedent for further decorative animation.",
+        "stacking": "z-0 on the layer, `relative z-10` on every direct child of the page root. A negative z-index does not work: body paints its own background colour over any child below zero and the mesh disappears entirely. This trap has bitten the codebase twice.",
+        "geometry": "position: fixed, so the canvas never exceeds one viewport however long the page grows. The page is ~4.000px; an absolutely-positioned canvas of that height would be tens of megapixels repainting every frame."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary CTA",
+      "kind": "button",
+      "refersTo": "cta-primary",
+      "description": "The coral call to action on the ink ground. Label in printed ink, never white.",
+      "html": "<a class=\"ds-cta-primary\" href=\"#\">soy creador</a>",
+      "css": ".ds-cta-primary { display: inline-flex; height: 3.25rem; align-items: center; justify-content: center; padding: 0 1.75rem; background: var(--color-accent, #FF3B4F); color: var(--color-print, #131316); font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; border: none; border-radius: 0; box-shadow: none; transition: background-color 0.2s; } .ds-cta-primary:hover { background: var(--color-accent-hover, #FF5566); } .ds-cta-primary:focus-visible { outline: 2px solid var(--color-accent, #FF3B4F); outline-offset: 2px; } .ds-cta-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Secondary CTA",
+      "kind": "button",
+      "refersTo": "cta-secondary",
+      "description": "Outlined paper stroke on the ink ground; inverts to a solid paper field on hover.",
+      "html": "<a class=\"ds-cta-secondary\" href=\"#\">soy una marca</a>",
+      "css": ".ds-cta-secondary { display: inline-flex; height: 3.25rem; align-items: center; justify-content: center; padding: 0 1.75rem; background: transparent; color: var(--color-paper, #F0EDE4); border: 2px solid var(--color-paper, #F0EDE4); border-radius: 0; box-shadow: none; font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; transition: background-color 0.2s, color 0.2s; } .ds-cta-secondary:hover { background: var(--color-paper, #F0EDE4); color: var(--color-print, #131316); } .ds-cta-secondary:focus-visible { outline: 2px solid var(--color-accent, #FF3B4F); outline-offset: 2px; } .ds-cta-secondary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Header Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "The only navigation on the surface: one outlined utility-face link stating exactly what happens.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-link\" href=\"#\">entrar</a></nav>",
+      "css": ".ds-nav { display: flex; align-items: center; justify-content: flex-end; } .ds-nav-link { display: inline-block; padding: 0.625rem 1rem; border: 2px solid var(--color-paper, #F0EDE4); border-radius: 0; background: transparent; color: var(--color-paper, #F0EDE4); font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; transition: background-color 0.2s, color 0.2s; } .ds-nav-link:hover { background: var(--color-paper, #F0EDE4); color: var(--color-print, #131316); } .ds-nav-link:focus-visible { outline: 2px solid var(--color-accent, #FF3B4F); outline-offset: 2px; }"
+    },
+    {
+      "name": "Paper Sheet",
+      "kind": "card",
+      "refersTo": "paper",
+      "description": "The only container in the system, and it is not a card: a torn sheet of bond paper cut out of the ink ground. No radius, no shadow, no border.",
+      "html": "<svg aria-hidden=\"true\" focusable=\"false\" style=\"position:absolute;width:0;height:0;pointer-events:none\"><defs><filter id=\"ds-rasgado\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\" primitiveUnits=\"userSpaceOnUse\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.012 0.09\" numOctaves=\"4\" seed=\"23\" result=\"fibra\"/><feDisplacementMap in=\"SourceGraphic\" in2=\"fibra\" scale=\"8\" xChannelSelector=\"R\" yChannelSelector=\"G\"/></filter></defs></svg><div class=\"ds-paper\" style=\"transform: rotate(-0.9deg)\"><div class=\"ds-paper-bg\" aria-hidden=\"true\"></div><div class=\"ds-paper-inner\"><p class=\"ds-paper-body\">La marca paga al creador por fuera, como ya lo hacen hoy. BrandFluence solo anota lo que declara cada parte.</p></div></div>",
+      "css": ".ds-paper { position: relative; border-radius: 0; box-shadow: none; } .ds-paper-bg { position: absolute; inset: 0; background: var(--color-paper, #F0EDE4); filter: url(#ds-rasgado); } .ds-paper-inner { position: relative; padding: 1.75rem; } @media (min-width: 640px) { .ds-paper-inner { padding: 2.25rem; } } .ds-paper-body { margin: 0; font-family: var(--font-faustina), Georgia, serif; font-size: 1.0625rem; line-height: 1.65; color: var(--color-print, #131316); max-width: 36rem; }"
+    },
+    {
+      "name": "Score Sheet",
+      "kind": "custom",
+      "refersTo": "paper",
+      "description": "The signature element: stamp, subject in pencil, the score at the page's largest size, four component bars measured against the shared 40-point ceiling with a tick at each own ceiling, and the total deficit.",
+      "html": "<svg aria-hidden=\"true\" focusable=\"false\" style=\"position:absolute;width:0;height:0;pointer-events:none\"><defs><filter id=\"ds-rasgado-2\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\" primitiveUnits=\"userSpaceOnUse\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.012 0.09\" numOctaves=\"4\" seed=\"23\" result=\"f\"/><feDisplacementMap in=\"SourceGraphic\" in2=\"f\" scale=\"8\" xChannelSelector=\"R\" yChannelSelector=\"G\"/></filter></defs></svg><div class=\"ds-sheet\" style=\"transform: rotate(-0.9deg)\"><div class=\"ds-sheet-bg\" aria-hidden=\"true\"></div><div class=\"ds-sheet-inner\"><p class=\"ds-stamp\">ejemplo</p><p class=\"ds-meta\">Lucía</p><p class=\"ds-meta\">fitness · 48.200 seguidores</p><p class=\"ds-score\">89,33</p><p class=\"ds-total\">sobre 100</p><ul class=\"ds-lines\"><li><div class=\"ds-line-head\"><span class=\"ds-label\">nicho</span><span class=\"ds-value\">40<span class=\"ds-unit\">/40</span></span></div><span class=\"ds-bar\"><span class=\"ds-bar-fill\" style=\"width:100%\"></span><span class=\"ds-tick\" style=\"left:100%\"></span></span></li><li><div class=\"ds-line-head\"><span class=\"ds-label\">audiencia</span><span class=\"ds-value\">21,83<span class=\"ds-unit\">/25</span></span></div><span class=\"ds-bar\"><span class=\"ds-bar-fill\" style=\"width:54.6%\"></span><span class=\"ds-tick\" style=\"left:62.5%\"></span></span></li><li><div class=\"ds-line-head\"><span class=\"ds-label\">engagement</span><span class=\"ds-value\">22,5<span class=\"ds-unit\">/25</span></span></div><span class=\"ds-bar\"><span class=\"ds-bar-fill\" style=\"width:56.25%\"></span><span class=\"ds-tick\" style=\"left:62.5%\"></span></span></li><li><div class=\"ds-line-head\"><span class=\"ds-label\">confianza</span><span class=\"ds-value\">5<span class=\"ds-unit\">/10</span></span></div><span class=\"ds-bar\"><span class=\"ds-bar-fill\" style=\"width:12.5%\"></span><span class=\"ds-tick\" style=\"left:25%\"></span></span></li></ul><p class=\"ds-deficit\">faltan 10,67 puntos</p></div></div>",
+      "css": ".ds-sheet { position: relative; border-radius: 0; box-shadow: none; } .ds-sheet-bg { position: absolute; inset: 0; background: var(--color-paper, #F0EDE4); filter: url(#ds-rasgado-2); } .ds-sheet-inner { position: relative; padding: 1.75rem; } .ds-sheet-inner p { margin: 0; } .ds-stamp, .ds-meta, .ds-total, .ds-label, .ds-value, .ds-deficit { font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; } .ds-stamp { width: fit-content; transform: rotate(-2deg); border: 2px solid var(--color-accent-print, #C81C2E); color: var(--color-accent-print, #C81C2E); padding: 0.25rem 0.625rem; } .ds-meta { margin-top: 1.5rem; color: var(--color-pencil, #63615C); } .ds-meta + .ds-meta { margin-top: 0.375rem; } .ds-score { font-family: var(--font-shoulders), \"Arial Narrow\", Arial, sans-serif; font-weight: 800; font-optical-sizing: auto; font-variant-numeric: tabular-nums; letter-spacing: -0.04em; font-size: clamp(4.5rem, 12vw, 9.5rem); line-height: 0.78; color: var(--color-print, #131316); margin-top: 1.75rem; } .ds-total { margin-top: 0.75rem; border-top: 2px solid var(--color-print, #131316); padding-top: 0.75rem; color: var(--color-print, #131316); } .ds-lines { list-style: none; margin: 1.75rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.25rem; } .ds-line-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; } .ds-label { color: var(--color-pencil, #63615C); } .ds-value { color: var(--color-print, #131316); } .ds-unit { color: var(--color-pencil, #63615C); } .ds-bar { position: relative; display: flex; height: 5px; width: 100%; margin-top: 0.625rem; } .ds-bar-fill { display: block; height: 100%; background: var(--color-print, #131316); } .ds-tick { position: absolute; top: -4px; height: 13px; width: 1px; background: color-mix(in srgb, var(--color-print, #131316) 50%, transparent); transform: translateX(-50%); } .ds-deficit { margin-top: 1.5rem; border-top: 1px solid color-mix(in srgb, var(--color-print, #131316) 20%, transparent); padding-top: 1rem; color: var(--color-accent-print, #C81C2E); }"
+    },
+    {
+      "name": "Audit Row",
+      "kind": "custom",
+      "refersTo": "paper-row",
+      "description": "One itemised component of the score on a list sheet: label, dotted leader, value over ceiling, the deficit in printed coral, and the rule that produced the number.",
+      "html": "<div class=\"ds-row\"><div class=\"ds-row-head\"><span class=\"ds-row-label\">audiencia</span><span class=\"ds-leader\" aria-hidden=\"true\"></span><span class=\"ds-row-value\">21,83<span class=\"ds-row-unit\"> de 25</span></span><span class=\"ds-row-gap\">faltan 3,17</span></div><p class=\"ds-row-note\">48.200 seguidores sobre un mínimo de 10.000, o sea 4,8×. La escala satura a 10×, así que crecer más apenas suma.</p></div>",
+      "css": ".ds-row { background: var(--color-paper, #F0EDE4); padding: 1.5rem; border-radius: 0; } @media (min-width: 640px) { .ds-row { padding: 1.75rem 2.25rem; } } .ds-row + .ds-row { border-top: 1px solid color-mix(in srgb, var(--color-print, #131316) 20%, transparent); } .ds-row-head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 1.25rem; row-gap: 0.25rem; } .ds-row-label, .ds-row-value, .ds-row-gap { font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; color: var(--color-print, #131316); } .ds-leader { display: none; height: 1px; min-width: 2rem; flex: 1; background: color-mix(in srgb, var(--color-print, #131316) 25%, transparent); } @media (min-width: 640px) { .ds-leader { display: block; } } .ds-row-unit { color: var(--color-pencil, #63615C); } .ds-row-gap { color: var(--color-accent-print, #C81C2E); } .ds-row-note { margin: 0.625rem 0 0; max-width: 36rem; font-family: var(--font-faustina), Georgia, serif; font-size: 1.0625rem; line-height: 1.65; color: var(--color-pencil, #63615C); }"
+    },
+    {
+      "name": "Struck Campaign",
+      "kind": "custom",
+      "refersTo": "paper",
+      "description": "The hard filter, drawn as a correction rather than a greyed-out row: a display-size lowercase name with a hand-angled coral bar through it, and the failed threshold beneath a coral rule.",
+      "html": "<div class=\"ds-struck\"><p class=\"ds-struck-title\"><span class=\"ds-tachon\">colección ropa técnica</span></p><p class=\"ds-struck-meta\">moda · mín. 50.000 seguidores</p><p class=\"ds-struck-fail\">audiencia: 48.200 &lt; 50.000</p></div>",
+      "css": ".ds-struck { background: var(--color-paper, #F0EDE4); padding: 1.75rem; border-radius: 0; } .ds-struck p { margin: 0; } .ds-struck-title { font-family: var(--font-shoulders), \"Arial Narrow\", Arial, sans-serif; font-weight: 700; font-optical-sizing: auto; letter-spacing: -0.025em; font-size: clamp(2.5rem, 5.5vw, 4.25rem); line-height: 0.94; text-transform: lowercase; color: var(--color-print, #131316); } .ds-tachon { position: relative; display: inline-block; } .ds-tachon::after { content: \"\"; position: absolute; left: -0.15em; right: -0.15em; top: 52%; height: 3px; background: var(--color-accent-print, #C81C2E); transform: rotate(-1.4deg); } .ds-struck-meta, .ds-struck-fail { font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; } .ds-struck-meta { margin-top: 1.25rem; color: var(--color-pencil, #63615C); } .ds-struck-fail { margin-top: 1.5rem; border-top: 2px solid var(--color-accent-print, #C81C2E); padding-top: 1rem; color: var(--color-accent-print, #C81C2E); }"
+    },
+    {
+      "name": "Rubric Marquee",
+      "kind": "custom",
+      "refersTo": "marquee",
+      "description": "Full-bleed coral band above the closing call. Two identical copies translated -50% in pure CSS; aria-hidden because the rubric is already read in full in the audit section.",
+      "html": "<div class=\"ds-marquee\" aria-hidden=\"true\"><div class=\"ds-marquee-track\"><div class=\"ds-marquee-copy\"><span class=\"ds-marquee-item\">nicho 40<span class=\"ds-marquee-sep\">/</span></span><span class=\"ds-marquee-item\">audiencia 25<span class=\"ds-marquee-sep\">/</span></span><span class=\"ds-marquee-item\">engagement 25<span class=\"ds-marquee-sep\">/</span></span><span class=\"ds-marquee-item\">confianza 10<span class=\"ds-marquee-sep\">/</span></span></div><div class=\"ds-marquee-copy\"><span class=\"ds-marquee-item\">nicho 40<span class=\"ds-marquee-sep\">/</span></span><span class=\"ds-marquee-item\">audiencia 25<span class=\"ds-marquee-sep\">/</span></span><span class=\"ds-marquee-item\">engagement 25<span class=\"ds-marquee-sep\">/</span></span><span class=\"ds-marquee-item\">confianza 10<span class=\"ds-marquee-sep\">/</span></span></div></div></div>",
+      "css": ".ds-marquee { overflow: hidden; background: var(--color-accent, #FF3B4F); border-top: 2px solid var(--color-accent, #FF3B4F); border-bottom: 2px solid var(--color-accent, #FF3B4F); padding: 0.75rem 0; } .ds-marquee-track { display: flex; width: max-content; } .ds-marquee-copy { display: flex; flex-shrink: 0; } .ds-marquee-item { display: flex; align-items: center; gap: 1.5rem; white-space: nowrap; padding: 0 1.5rem; font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; color: var(--color-print, #131316); } .ds-marquee-sep { color: color-mix(in srgb, var(--color-print, #131316) 40%, transparent); } @keyframes ds-desfile { from { transform: translateX(0); } to { transform: translateX(-50%); } } @media (prefers-reduced-motion: no-preference) { .ds-marquee-track { animation: ds-desfile 34s linear infinite; } }"
+    },
+    {
+      "name": "Section Heading",
+      "kind": "custom",
+      "refersTo": "typography.display",
+      "description": "A display-size lowercase heading on the ink ground, in paper. No eyebrow, no kicker, no uppercase category label above it.",
+      "html": "<h2 class=\"ds-heading\">de dónde salen esos 89,33</h2>",
+      "css": ".ds-heading { margin: 0; font-family: var(--font-shoulders), \"Arial Narrow\", Arial, sans-serif; font-weight: 700; font-optical-sizing: auto; letter-spacing: -0.025em; font-size: clamp(2.5rem, 5.5vw, 4.25rem); line-height: 0.94; text-transform: lowercase; color: var(--color-paper, #F0EDE4); }"
+    },
+    {
+      "name": "Shader Ground",
+      "kind": "custom",
+      "refersTo": "colors.canvas",
+      "description": "Ink-only animated mesh gradient on a viewport-fixed layer behind the entire page, at z-0 with content at z-10. WebGL in the shipped build (@paper-design/shaders-react MeshGradient); the snippet below is a static CSS stand-in for the panel, since the panel cannot run the library.",
+      "html": "<div class=\"ds-ground\"><div class=\"ds-ground-wash\" aria-hidden=\"true\"></div><h2 class=\"ds-ground-title\">cada match,<br>con su porqué</h2></div>",
+      "css": ".ds-ground { position: relative; isolation: isolate; overflow: hidden; background: var(--color-canvas, #0B0B0C); padding: 3rem 1.25rem 4rem; } .ds-ground-wash { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(60% 55% at 22% 18%, #55555F 0%, transparent 62%), radial-gradient(55% 60% at 78% 34%, #3D3D46 0%, transparent 66%), radial-gradient(70% 60% at 48% 86%, #232329 0%, transparent 70%), #0B0B0C; } .ds-ground-title { position: relative; z-index: 10; margin: 0; font-family: var(--font-shoulders), \"Arial Narrow\", Arial, sans-serif; font-weight: 700; font-optical-sizing: auto; letter-spacing: -0.025em; font-size: clamp(2.5rem, 5.5vw, 4.25rem); line-height: 0.94; text-transform: lowercase; color: var(--color-paper, #F0EDE4); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Graded Sheet",
+    "overview": "A page of bond paper, torn out and laid on ink, carrying a mark that has already been graded. The surface behaves like a marked-up document rather than a product page: the score is the largest thing on it, every component of that score is itemised on the sheet, the shortfall is written next to the total, and one campaign is struck through in red because it never qualified. The reader is auditing, not being pitched.\n\nThe material logic is two-part and absolute. Ink is the ground; paper is the only place content lives. Every block of reading matter sits on a torn sheet of #F0EDE4; the ink ground carries only headings, the two calls to action, and the footer line. The paper is cut out, never lifted: there is no radius anywhere, no shadow anywhere, and the separation between sheet and ground comes entirely from the material contrast plus the ragged SVG-displaced edge. Sheets sit at small off-square rotations (−0.9°, −0.5°, −0.3°, +0.7°, +0.9°) because a sheet resting on a desk never lands straight.\n\nDensity is generous and asymmetric. Nothing on the page is centred — not the hero, not the headings, not the buttons, not the closing call. The first viewport puts the graded sheet on the left and the two-line lowercase headline plus its two buttons on the right, and every later section keeps one heavy side. The confirmed anti-reference is the thing the whole category ships: a centred grid of four component cards presenting a score. This page itemises the same four components as rows on a sheet instead.",
+    "keyCharacteristics": [
+      "Bond paper cut out of near-black ink; content only ever on paper.",
+      "Exactly three type sizes on the entire page, and no fourth.",
+      "One grey, and it is for paper only.",
+      "Coral appears only as a correction mark or as the final call.",
+      "Zero radius, zero shadows, zero raster assets.",
+      "Ragged sheet edges from a single shared SVG displacement filter.",
+      "Three motions only: a scroll reveal, one CSS marquee, and an ink-only mesh ground fixed behind the whole page."
+    ],
+    "rules": [
+      {
+        "name": "The One Grey Rule",
+        "body": "There is exactly one grey and it is --color-pencil. A five-step grey ramp is what turns a printed document into a dashboard; do not add a second.",
+        "section": "colors"
+      },
+      {
+        "name": "The Grey Is For Paper Rule",
+        "body": "Pencil is legible on paper and nowhere else — on ink it falls to 3.16:1 and fails AA. When text on the ink ground needs to recede, it does not go grey: it stays paper and recedes by weight and position. The footer line is the canonical instance.",
+        "section": "colors"
+      },
+      {
+        "name": "The Correction Mark Rule",
+        "body": "Coral appears only where something has been corrected — a deficit, a strikethrough, a failed threshold, an underline, a stamp — and in the final call to action. It is never decoration, never a section divider, never a left border on a callout.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Densities, One Accent Rule",
+        "body": "--color-accent on ink, --color-accent-print on paper. They are the same accent at two printing densities, chosen by ground and by contrast. Never use the UI coral as text on paper.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mirrored Token Rule",
+        "body": "Every colour in this system exists twice on purpose: in the @theme block of src/app/globals.css and in src/lib/design-tokens.ts. The TypeScript mirror exists because a future Expo app cannot read CSS custom properties. A colour change that lands in only one of the two files is a defect. Change both, in the same commit. The one exemption is `inkWash`, the shader ground's four-step ink ramp: it lives only in src/lib/design-tokens.ts because it is passed as JS props and no CSS rule reads it. Do not add matching custom properties to globals.css; they would have no consumer. Its top step is capped by contrast, not taste: paper text on #55555F measures 6.0:1, so headings over the ground still pass AA at the brightest moment of the animation.",
+        "section": "colors"
+      },
+      {
+        "name": "The Three Sizes Rule",
+        "body": "--text-score, --text-display, --text-base. There is no fourth size on this surface, at any breakpoint. This is the system's hardest rule and the easiest to break by accident: any new element inherits one of the three.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Small Print Rule",
+        "body": "There is no small type. What reads as fine print is the same size as body copy, set in the utility face in uppercase. Rank is carried by weight, case, face, inversion, and rule — never by shrinking text.",
+        "section": "typography"
+      },
+      {
+        "name": "The Lowercase Headline Rule",
+        "body": "Display-size headings are set lowercase. The utility face is the only one that goes uppercase.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Kicker Rule",
+        "body": "No eyebrow, kicker, or uppercase category label above a heading. The build refuses this twice explicitly; a headline stands on its own and the context goes in the body copy beneath it.",
+        "section": "typography"
+      },
+      {
+        "name": "The Nothing Centred Rule",
+        "body": "No centred headline, no centred button row, no centred section. If an element looks balanced left-and-right, it is wrong for this world.",
+        "section": "layout"
+      },
+      {
+        "name": "The Cut, Not Lifted Rule",
+        "body": "A surface separates from the ground by material contrast and a torn edge. Never by a shadow, a glow, a border radius, or a translucent overlay.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Ink-Only Ground Rule",
+        "body": "A background field introduces no colour. The mesh ground is four steps of ink; a coral field behind the page would turn the accent into decoration and break the Correction Mark Rule. It caps its own resolution and adds no grain of its own on top of body::after.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Ground Is Fixed, Not Tall",
+        "body": "The ground layer is position: fixed, so the canvas never exceeds one viewport however long the page grows. This page is roughly 4.000px tall; an absolutely-positioned canvas of that height would be tens of megapixels of WebGL repainting every frame. Measured after the change: 1.6 MP at 52 fps on desktop 1440x900, and 0.44 MP on a 360px phone at dpr 2. A full-page background here is a fixed window onto a moving ground, never a tall canvas.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Ground Sits At z-0, Never Below",
+        "body": "The ground layer uses z-0 and every direct child of the page root carries `relative z-10`. A negative z-index does not work: body paints its own background colour over any child below zero and the mesh disappears entirely. This trap has bitten this codebase twice; it is a rule, not a code comment.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Sections Are Ruled, Not Filled Rule",
+        "body": "A section separates itself from its neighbours with hairline rules (border-y, paper at 10%), never with an opaque background fill. One section carried bg-canvas and cut a solid band across the middle of the page, blanking the shader ground behind it; the fill was removed and the rules kept. Anything opaque and full-bleed erases the ground.",
+        "section": "layout"
+      }
+    ],
+    "dos": [
+      "Do put every piece of reading matter on a sheet of bond paper, and leave the ink ground for headings, buttons and the footer line.",
+      "Do stay inside the three sizes (--text-score, --text-display, --text-base). A new element inherits one of them.",
+      "Do set labels at body size in the utility face, uppercase, width axis 80%.",
+      "Do use printed coral on paper and UI coral on ink, chosen by ground.",
+      "Do change a colour in both globals.css and src/lib/design-tokens.ts, in the same commit.",
+      "Do apply the tear filter only to a sheet's background layer.",
+      "Do rotate sheets by a fraction of a degree, and keep the heavy side of every layout off-centre.",
+      "Do show a deficit next to every score, per component and in total.",
+      "Do gate any new CSS animation inside prefers-reduced-motion: no-preference, return children unwrapped for JavaScript animation, and freeze a shader on a fixed frame — one branch per mechanism.",
+      "Do cap any shader's resolution in the component (maxPixelCount, minPixelRatio); the library default is unbounded and costs ~34 fps here.",
+      "Do keep any background field ink-only, fixed to the viewport, and above z-0 with content at z-10.",
+      "Do separate sections with hairline rules; an opaque full-bleed fill blanks the ground.",
+      "Do give every interactive element a 2px coral focus-visible outline at 2px offset."
+    ],
+    "donts": [
+      "Don't introduce a fourth type size, and don't shrink text to signal secondary rank — use weight, case, face, inversion, or a rule.",
+      "Don't add a second grey or a grey ramp, and don't put --color-pencil on the ink ground; it fails AA there.",
+      "Don't put --color-accent as text on paper (2.8:1) or white text on a coral field (3.3:1).",
+      "Don't use coral as decoration — no coral divider, no coral left border on a callout, no coral section header. It marks a correction or it does not appear.",
+      "Don't add a border radius or a shadow anywhere on this surface, and don't fake depth with a translucent overlay or a glow.",
+      "Don't put a track behind a score bar, and don't normalise bars against their own maxima.",
+      "Don't draw a bar at the weight of a rule (1–2px); a measure is 5px and carries a tick.",
+      "Don't centre a headline, a button row, or a section.",
+      "Don't add an eyebrow, kicker, or uppercase category label above a heading.",
+      "Don't ship a raster asset onto this surface; the material is CSS and SVG.",
+      "Don't add a fourth motion, don't re-trigger the reveal on re-entry, and don't read the hero ground as licence for further decorative animation.",
+      "Don't let a background field carry colour, grow taller than the viewport (use fixed), sit at a negative z-index (body paints over it and it vanishes), or add its own grain on top of body::after.",
+      "Don't widen inkWash past the point where paper text on its brightest step drops below AA; #55555F measures 6.0:1 and is the current ceiling.",
+      "Don't give a section an opaque background fill.",
+      "Don't mirror inkWash into globals.css; it is JS-only by design and the custom properties would have no consumer.",
+      "Don't apply any rule in this file to /dashboard or the rest of the app — that surface belongs to the incumbent panel system, which is out of scope here."
+    ]
+  }
+}

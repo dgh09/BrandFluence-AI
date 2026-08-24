@@ -42,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Capturas de la revisión de acabado: evidencia de una pasada, no fuente.
+.impeccable/review/

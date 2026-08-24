@@ -41,3 +41,21 @@ export function formatPercent(value: number): string {
   if (!Number.isFinite(value)) return "";
   return `${percents.format(value)}%`;
 }
+
+/**
+ * Puntuaciones del matching: `89,33`, `22,5`, `40`.
+ *
+ * Hasta dos decimales, pero sin rellenar con ceros. `scoreMatch` devuelve el
+ * desglose ya redondeado a dos, y en una misma ficha conviven `40` exacto y
+ * `21,83`: forzar `40,00` daría una precisión que el algoritmo no tiene.
+ */
+const scores = new Intl.NumberFormat(LOCALE, {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+});
+
+/** `89,33`. Coma decimal, como el resto de la interfaz. */
+export function formatScore(value: number): string {
+  if (!Number.isFinite(value)) return "";
+  return scores.format(value);
+}

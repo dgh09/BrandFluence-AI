@@ -63,6 +63,154 @@
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* ===========================================================================
+   La hoja calificada — rama redesign/impeccable
+
+   Material nuevo para la portada. No sustituye a los tokens de arriba: el
+   panel los sigue usando tal cual.
+
+   Tres disciplinas que este bloque impone y conviene no aflojar:
+
+   1. UNA SOLA TALLA. Hay tres tamaños en toda la página y ni uno más: la
+      nota, el titular y el cuerpo. No existe «letra pequeña». El rango lo
+      cargan el peso, las versalitas, la inversión y la línea.
+   2. UN SOLO GRIS. `--color-pencil` y se acabó. Una rampa de cinco grises es
+      lo que convierte un documento impreso en un panel de control.
+   3. EL ACENTO SOLO CALIFICA. El coral aparece donde hay una marca de
+      corrección y en la llamada final. En ningún otro sitio.
+   =========================================================================== */
+
+@theme {
+  /* --- Los cinco colores ------------------------------------------------ */
+  /* El fondo es `--color-canvas`, que ya existe arriba: #0B0B0C. */
+  --color-paper: #f0ede4; /* papel bond */
+  --color-print: #131316; /* lo impreso sobre el papel — 15:1 */
+  --color-pencil: #63615c; /* el único gris — 5,2:1 sobre papel */
+  /* El coral, impreso. Medido: 4,87:1 sobre #F0EDE4. El valor anterior
+     (#D42237) daba 4,40:1 y no llegaba a AA, que es donde se veía: los
+     «faltan …» y el «audiencia: 48.200 < 50.000» son texto normal de 17px. */
+  --color-accent-print: #c81c2e;
+
+  /* --- Las tres caras --------------------------------------------------- */
+  /* Los nombres de `next/font` (--font-shoulders, --font-faustina,
+     --font-martian) son distintos a propósito: si la variable del tema se
+     llamara igual que la que inyecta la cara, `<html>` pisaría al tema y la
+     tipografía se caería al fallback sin avisar. */
+  --font-display: var(--font-shoulders), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-faustina), Georgia, serif;
+  --font-utility: var(--font-martian), ui-monospace, monospace;
+
+  /* --- Los tres tamaños, y no hay un cuarto ----------------------------- */
+  --text-score: clamp(4.5rem, 12vw, 9.5rem);
+  --text-score--line-height: 0.78;
+  --text-display: clamp(2.5rem, 5.5vw, 4.25rem);
+  --text-display--line-height: 0.94;
+  --text-base: 1.0625rem;
+  --text-base--line-height: 1.65;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  /* La cara trae eje de tamaño óptico: a cuerpo de titular afina los trazos
+     sola, así que no hay que compensar el peso a mano. */
+  font-optical-sizing: auto;
+}
+
+/* Etiquetas y datos. Versalitas a la misma talla que el cuerpo, condensadas
+   al 80% para que quepan sin abrir una cuarta talla. */
+.utility {
+  font-family: var(--font-utility);
+  font-stretch: 80%;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.body-copy {
+  font-family: var(--font-body);
+}
+
+/* La nota. Es lo único que rompe la talla, y por eso se ve. */
+.nota {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-optical-sizing: auto;
+}
+
+/* La portada apaga el resplandor del `body`: ver `hoja-calificada` en
+   `page.tsx`. En el panel esa luz sigue dando elevación. */
+body:has(.hoja-calificada) {
+  background-image: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Las superficies que no dibujé
+
+   La selección, el cursor de texto y la barra de desplazamiento vienen con los
+   valores por defecto del navegador, que no pertenecen a ningún sistema de
+   diseño. Sin esto, seleccionar un párrafo del papel lo pinta de azul de
+   sistema y delata que la página está montada, no construida.
+   --------------------------------------------------------------------------- */
+::selection {
+  background: var(--color-accent);
+  color: var(--color-print);
+}
+
+html {
+  caret-color: var(--color-accent);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-pencil) var(--color-canvas);
+}
+
+/* ---------------------------------------------------------------------------
+   El tachón
+
+   El filtro duro no es una fila en gris: es una campaña tachada. El trazo va
+   en un pseudo-elemento y no en `line-through` porque hace falta grosor,
+   inclinación y color propios — una corrección a mano, no un estilo de texto.
+   --------------------------------------------------------------------------- */
+.tachon {
+  position: relative;
+  display: inline-block;
+}
+
+.tachon::after {
+  content: "";
+  position: absolute;
+  left: -0.15em;
+  right: -0.15em;
+  top: 52%;
+  height: 3px;
+  background: var(--color-accent-print);
+  transform: rotate(-1.4deg);
+}
+
+/* ---------------------------------------------------------------------------
+   La marquesina
+
+   Dentro de `no-preference` a propósito: la regla global de reducción de
+   movimiento acorta las animaciones a 0,01ms, lo que dejaría la cinta saltando
+   al final del recorrido en vez de quieta.
+   --------------------------------------------------------------------------- */
+@keyframes desfile {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .marquesina {
+    animation: desfile 34s linear infinite;
+  }
+}
+
 /* Dark-only por diseño: la referencia es un producto dark. No hay light mode,
    así que fijamos color-scheme para que los controles nativos (scrollbars,
    date pickers) no salgan en blanco. */

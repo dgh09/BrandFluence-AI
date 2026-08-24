@@ -30,7 +30,42 @@ export const colors = {
   /** Tinta sobre mint y púrpura: blanco encima no llega a 4.5:1. */
   onMint: "#06251F",
   onPurple: "#1B0B2E",
+
+  /* --- La hoja calificada: material de la portada -----------------------
+     Espejo del segundo bloque `@theme` de globals.css. Si cambias uno,
+     cámbialo en los dos sitios.
+
+     Son cuatro y no más a propósito: el fondo lo pone `canvas` y el acento
+     lo pone `accent`. Un quinto gris sería una rampa, y la rampa es lo que
+     convierte un documento impreso en un panel de control. */
+
+  /** Papel bond: todo lo que lleva contenido. */
+  paper: "#F0EDE4",
+  /** Lo impreso sobre el papel. 15:1. */
+  print: "#131316",
+  /** El único gris de la portada. 5,2:1 sobre papel. */
+  pencil: "#63615C",
+  /** El coral, impreso. 4,87:1 sobre papel; el de UI se queda en 2,8:1. */
+  accentPrint: "#C81C2E",
 } as const;
+
+/**
+ * La rampa de tinta de la malla animada que hace de suelo de la portada.
+ *
+ * Vive aquí y no en `globals.css` porque no la consume ninguna regla de CSS:
+ * son cuatro cadenas que se le pasan al shader por props, así que la regla de
+ * mantener el espejo entre los dos ficheros no le aplica.
+ *
+ * Cuatro pasos y todos tinta. La malla no introduce color: un campo coral de
+ * fondo convertiría el acento en decoración, y en este sistema el acento solo
+ * califica.
+ *
+ * El recorrido es ancho a propósito, de #0B0B0C a #55555F. Empezó tres veces
+ * más estrecho y no se veía. El techo lo pone el contraste: el texto en papel
+ * (#F0EDE4) sobre el paso más claro da 6,0:1, así que los titulares sobre
+ * tinta siguen pasando AA en el peor momento de la animación.
+ */
+export const inkWash = ["#0B0B0C", "#232329", "#3D3D46", "#55555F"] as const;
 
 /**
  * Paleta categórica de datos, en ORDEN FIJO.
