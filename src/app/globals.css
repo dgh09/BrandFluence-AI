@@ -63,6 +63,96 @@
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* ===========================================================================
+   Rediseño «dossier calificado» — rama redesign/taste
+
+   Material nuevo, no sustituto: los tokens de arriba siguen mandando en el
+   panel. Esto añade el segundo material de la portada, el papel, y las tres
+   caras del documento.
+
+   Por qué el fondo NO se llama «ink» aquí: en el sistema de arriba `ink` ya
+   es la tinta blanca del texto sobre oscuro. El fondo casi negro es `canvas`,
+   y así se queda. `print` es la tinta que se imprime SOBRE el papel.
+   =========================================================================== */
+
+@theme {
+  /* --- Papel y tinta ---------------------------------------------------- */
+  --color-canvas-2: #141416; /* segunda tinta: bandas de sección */
+  --color-paper: #eae8e3; /* stock gris frío: los recortes con contenido */
+  --color-paper-2: #d4d1c9; /* segundo stock: pilas y recortes secundarios */
+  --color-print: #17171a; /* texto impreso sobre papel — 14:1 */
+  --color-graphite: #5e5e63; /* anotación y metadatos sobre papel — 5,1:1 */
+
+  /* El mismo coral, oscurecido para el papel. NO es un segundo acento:
+     #FF3B4F sobre #EAE8E3 se queda en 2,8:1 y no se puede usar para texto. */
+  --color-accent-print: #d42237; /* 4,6:1 sobre papel */
+
+  /* --- Las tres caras --------------------------------------------------- */
+  --font-display: var(--font-archivo), "Archivo Narrow", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-body: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --font-utility: var(--font-plex-mono), ui-monospace, "Courier New", monospace;
+
+  /* --- Escala del documento --------------------------------------------- */
+  --text-score: clamp(4rem, 8vw, 7.5rem);
+  --text-score--line-height: 0.82;
+  --text-display: clamp(2.75rem, 7vw, 5.5rem);
+  --text-display--line-height: 0.92;
+  --text-h2: clamp(1.75rem, 3.5vw, 2.75rem);
+  --text-h2--line-height: 1.02;
+}
+
+/* ---------------------------------------------------------------------------
+   Display condensada
+
+   La anchura sale del eje `wdth` de Archivo, que `next/font` trae con
+   `axes: ["wdth"]`. Es condensación del tipo, no un `scaleX` que deformaría
+   los trazos. Si la cara no cargara, el fallback es Archivo Narrow.
+   --------------------------------------------------------------------------- */
+.display {
+  font-family: var(--font-display);
+  font-stretch: 72%;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* Etiquetas y metadatos: la cara de los formularios institucionales. */
+.utility {
+  font-family: var(--font-utility);
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* Cuerpo del documento. Vive sobre papel, que es donde la serif trabaja. */
+.body-copy {
+  font-family: var(--font-body);
+  line-height: 1.7;
+}
+
+/* ---------------------------------------------------------------------------
+   Marquesina
+
+   Va dentro de `no-preference` a propósito: la regla global de reducción de
+   movimiento acorta las animaciones a 0,01ms, y eso dejaría la cinta saltando
+   al final del recorrido en vez de quieta. Así, quien pide menos movimiento
+   simplemente no recibe la animación.
+   --------------------------------------------------------------------------- */
+@keyframes desfile {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .marquesina {
+    animation: desfile 32s linear infinite;
+  }
+}
+
 /* Dark-only por diseño: la referencia es un producto dark. No hay light mode,
    así que fijamos color-scheme para que los controles nativos (scrollbars,
    date pickers) no salgan en blanco. */

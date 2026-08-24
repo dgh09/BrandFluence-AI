@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 
-import { ScoreDot } from "@/components/ui/ScoreDot";
+import { formatScore } from "@/lib/numbers";
 
 export interface SwipeCard {
   name: string;
@@ -13,7 +13,6 @@ export interface SwipeCard {
   /** Valor exacto de `scoreMatch`. */
   score: number;
   action: "connect" | "pass";
-  photo: string;
 }
 
 interface SwipeDeckProps {
@@ -22,21 +21,23 @@ interface SwipeDeckProps {
   interval?: number;
 }
 
-/** Lo que tarda la tarjeta en salir. Coincide con --duration-slow. */
+/** Lo que tarda la tarjeta en salir. */
 const SALIDA_MS = 420;
 
 /**
  * Demo automática del gesto de la bandeja.
- *
- * La portada explicaba el producto y nunca enseñaba lo único que el visitante
- * va a hacer de verdad: mirar un candidato ya puntuado y decidir si conecta o
- * pasa. Esto lo enseña en bucle, sin pedir interacción.
  *
  * No es interactiva a propósito: un carrusel que responde al ratón invita a
  * jugar con él en vez de leer la página.
  *
  * Con `prefers-reduced-motion` se queda la primera tarjeta ya conectada, sin
  * bucle y sin contadores.
+ *
+ * Las tarjetas son fichas de papel, no fotos. La portada anterior enseñaba
+ * caras de banco junto a nombres y métricas de ejemplo; aquí la ficha ES el
+ * contenido, así que el problema desaparece en vez de taparse. El borde va
+ * recto y sin el filtro de desgarro: un filtro SVG sobre un elemento que se
+ * anima se recalcula en cada fotograma, y esto se mueve en bucle.
  */
 export function SwipeDeck({ cards, interval = 2600 }: SwipeDeckProps) {
   const reduce = useReducedMotion();
@@ -82,20 +83,15 @@ export function SwipeDeck({ cards, interval = 2600 }: SwipeDeckProps) {
           // Las de detrás avanzan un peldaño MIENTRAS la de arriba se va, no
           // después. Si esperan a que termine, el hueco se llena de golpe al
           // final y ese salto se lee como una pausa.
-          //
-          // La `key` sigue atada a la profundidad estructural, así que cuando
-          // el índice avanza React remonta cada tarjeta justo donde su
-          // animación ya la había dejado y el relevo no se ve.
           const profundidadVisual =
             saliendo && !reduce && !arriba ? profundidad - 1 : profundidad;
 
           return (
             <motion.article
               key={card.name + profundidad}
-              className="absolute inset-0 overflow-hidden rounded-card border border-line bg-surface"
-              // Origen en el centro y no abajo: con el origen abajo, encoger la
-              // tarjeta le baja el borde superior justo lo que lo sube el
-              // desplazamiento, y la pila se esconde detrás de la primera.
+              className={`absolute inset-0 flex flex-col justify-between p-5 ${
+                arriba ? "bg-paper" : "bg-paper-2"
+              }`}
               style={{ transformOrigin: "50% 50%", zIndex: 10 - profundidad }}
               animate={
                 fuera
@@ -116,42 +112,37 @@ export function SwipeDeck({ cards, interval = 2600 }: SwipeDeckProps) {
               }
               transition={{ duration: SALIDA_MS / 1000, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="relative h-[72%] bg-surface-2">
-                {/* `<img>` y no `next/image`, igual que en `ui/Avatar.tsx`: meter
-                    el host de Unsplash en los dominios remotos no compensa
-                    cuando su propio CDN ya sirve la imagen al tamaño pedido en
-                    la URL. Van a 2× del hueco real, no a 640². */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={card.photo}
-                  alt=""
-                  width={600}
-                  height={472}
-                  className="size-full object-cover"
-                />
-
-                <span className="absolute right-3 top-3 inline-flex items-center rounded-pill bg-canvas/70 px-3 py-1.5 backdrop-blur-sm">
-                  <ScoreDot score={card.score} />
-                </span>
-
-                {arriba && (saliendo || reduce) ? (
-                  <span
-                    className={`absolute left-3 top-3 rounded-pill px-3 py-1.5 text-xs font-bold uppercase tracking-[0.04em] ${
-                      conectar
-                        ? "bg-mint text-on-mint"
-                        : "bg-surface-3 text-ink-muted"
-                    }`}
-                  >
-                    {conectar ? "Conectar" : "Pasar"}
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="p-4">
-                <p className="font-bold">{card.name}</p>
-                <p className="mt-1 text-sm text-ink-secondary">
+              <div>
+                <p className="utility text-[0.625rem] text-graphite">
+                  candidato
+                </p>
+                <p className="display mt-2 text-3xl text-print">{card.name}</p>
+                <p className="utility mt-1.5 text-[0.625rem] text-graphite">
                   {card.niche} · {card.followers} seguidores
                 </p>
+              </div>
+
+              <div className="relative">
+                <p className="display tabular text-7xl leading-[0.82] text-print">
+                  {formatScore(card.score)}
+                </p>
+                <p className="utility mt-2 border-t-2 border-print pt-2 text-[0.625rem] text-graphite">
+                  sobre 100
+                </p>
+
+                {/* El sello solo aparece en el momento de la decisión. Es la
+                    marca de calificación, no una etiqueta permanente. */}
+                {arriba && (saliendo || reduce) ? (
+                  <span
+                    className={`utility absolute bottom-1 right-0 rotate-[-7deg] border-2 px-2.5 py-1 text-[0.625rem] ${
+                      conectar
+                        ? "border-accent-print text-accent-print"
+                        : "border-graphite text-graphite"
+                    }`}
+                  >
+                    {conectar ? "conectar" : "pasar"}
+                  </span>
+                ) : null}
               </div>
             </motion.article>
           );

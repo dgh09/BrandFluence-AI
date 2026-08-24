@@ -30,6 +30,23 @@ export const colors = {
   /** Tinta sobre mint y púrpura: blanco encima no llega a 4.5:1. */
   onMint: "#06251F",
   onPurple: "#1B0B2E",
+
+  /* --- Material de la portada: papel sobre tinta ------------------------
+     Espejo de los tokens `--color-*` del segundo bloque `@theme` de
+     globals.css. Si cambias uno, cámbialo en los dos sitios. */
+
+  /** Segunda tinta: bandas de sección. */
+  canvas2: "#141416",
+  /** Stock gris frío: los recortes que llevan contenido. */
+  paper: "#EAE8E3",
+  /** Segundo stock: pilas y recortes secundarios. */
+  paper2: "#D4D1C9",
+  /** Texto impreso sobre papel. 14:1. */
+  print: "#17171A",
+  /** Anotación y metadatos sobre papel. 5,1:1. */
+  graphite: "#5E5E63",
+  /** El mismo coral, oscurecido para papel: el de UI se queda en 2,8:1. */
+  accentPrint: "#D42237",
 } as const;
 
 /**

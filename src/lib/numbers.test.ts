@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { formatCount, formatPercent } from "./numbers.ts";
+import { formatCount, formatPercent, formatScore } from "./numbers.ts";
 
 describe("formatCount", () => {
   it("agrupa los miles", () => {
@@ -43,5 +43,23 @@ describe("formatPercent", () => {
 
   it("un número imposible no pinta «NaN%»", () => {
     assert.equal(formatPercent(Number.NaN), "");
+  });
+});
+
+describe("formatScore", () => {
+  it("las cifras que la portada enseña, tal como salen de scoreMatch", () => {
+    assert.equal(formatScore(89.33), "89,33");
+    assert.equal(formatScore(21.83), "21,83");
+    assert.equal(formatScore(22.5), "22,5");
+  });
+
+  it("un componente exacto no finge decimales", () => {
+    // 40 de nicho es 40, no 40,00: el algoritmo no tiene esa precisión.
+    assert.equal(formatScore(40), "40");
+    assert.equal(formatScore(5), "5");
+  });
+
+  it("un número imposible no pinta «NaN»", () => {
+    assert.equal(formatScore(Number.NaN), "");
   });
 });
