@@ -877,7 +877,7 @@ escritas y sin usar.
 - [x] Notificaciones in-app
 - [x] Portada pública en la raíz
 - [x] Rediseño de la portada — desde el sistema de diseño, con la demo del swipe
-- [ ] Rediseño del panel por dentro — sin material todavía: el kit de diseño resultó ser un espejo del panel ya desplegado
+- [ ] Rediseño del panel por dentro — dirección elegida el 28/08/2026 («el margen y el cuerpo»: las cifras y las correcciones al margen, las campañas en el cuerpo), sin empezar a construir
 - [ ] Decidir si se cambia la paleta de acento — hoy sigue el coral `#FF3B4F`
 - [x] Desplegar en Vercel — [brand-fluence-ai.vercel.app](https://brand-fluence-ai.vercel.app)
 - [x] Cerrar PostgREST — RLS en todo `public` y sin privilegios para `anon`

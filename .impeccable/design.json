@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-24T00:00:00.000Z",
+  "generatedAt": "2026-08-28T17:03:18Z",
   "title": "Design System: BrandFluence AI — La hoja calificada",
   "extensions": {
     "scope": {
@@ -211,14 +211,29 @@
         "purpose": "Global CSS motion kill switch. Covers CSS only; JS animation must branch itself."
       },
       {
-        "name": "state-transition",
-        "value": "transition: color, background-color",
-        "purpose": "Hover and focus are colour-only. No transform transitions except a 1px active nudge on buttons."
-      },
-      {
         "name": "reduced-motion-branching",
         "value": "CSS animation gated inside no-preference; JS animation branches and returns children unwrapped; shader takes a frozen frame",
         "purpose": "Reduced motion is honoured once per mechanism. A new motion must pick the branch matching its mechanism; the global CSS override alone is never sufficient."
+      },
+      {
+        "name": "cta-flood",
+        "value": "scale 0 to 1 over 220ms cubic-bezier(0.16,1,0.3,1) on a 34rem circle centred on --x (the pointer entry x; 50% fallback for the keyboard)",
+        "purpose": "The hover fill on every button arrives instead of swapping. It must transition `scale`, not `transform`: Tailwind v4 writes the independent `scale` and `translate` properties and leaves `transform` at `none`, so a `transition: transform` animates nothing and the field pops. That defect shipped invisibly once, because the markup is identical either way and only the inspector shows it."
+      },
+      {
+        "name": "cta-arrow-relay",
+        "value": "translate 0 to 4rem and -4rem to 0 over 320ms cubic-bezier(0.34,1.56,0.64,1)",
+        "purpose": "The resting arrow leaves past the right edge while its twin lands where the first began. Moved with `translate` rather than left/right so the work stays on the compositor. The label never moves. Inherited from the 21st.dev FlowButton the user pinned, overshoot included: the detector flags bounce easing, and the overshoot was kept deliberately as the source component character."
+      },
+      {
+        "name": "cta-radius-close",
+        "value": "border-radius 100px to 12px over 320ms cubic-bezier(0.16,1,0.3,1)",
+        "purpose": "The pill tightens under the pointer. The only animated radius in the system."
+      },
+      {
+        "name": "state-transition",
+        "value": "transition: color, background-color, scale, translate, border-radius",
+        "purpose": "Hover and focus on buttons carry the flood, the relay and the radius close alongside colour. Everything else on the surface stays colour-only, plus the 1px active nudge."
       }
     ],
     "filters": [
@@ -288,25 +303,25 @@
       "name": "Primary CTA",
       "kind": "button",
       "refersTo": "cta-primary",
-      "description": "The coral call to action on the ink ground. Label in printed ink, never white.",
-      "html": "<a class=\"ds-cta-primary\" href=\"#\">soy creador</a>",
-      "css": ".ds-cta-primary { display: inline-flex; height: 3.25rem; align-items: center; justify-content: center; padding: 0 1.75rem; background: var(--color-accent, #FF3B4F); color: var(--color-print, #131316); font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; border: none; border-radius: 0; box-shadow: none; transition: background-color 0.2s; } .ds-cta-primary:hover { background: var(--color-accent-hover, #FF5566); } .ds-cta-primary:focus-visible { outline: 2px solid var(--color-accent, #FF3B4F); outline-offset: 2px; } .ds-cta-primary:active { transform: translateY(1px); }"
+      "description": "The coral call to action on the ink ground. Label in printed ink, never white. A pill at rest that closes to a 12px radius on hover; the fill arrives as a circle scaled from the pointer entry point, and the arrow relays across the button.",
+      "html": "<a class=\"ds-cta-primary\" href=\"#\"><span class=\"ds-flood\" aria-hidden=\"true\"></span><svg class=\"ds-arrow ds-arrow-out\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"square\" aria-hidden=\"true\"><path d=\"M1 8h13M9.5 3.5 14 8l-4.5 4.5\"/></svg><svg class=\"ds-arrow ds-arrow-in\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"square\" aria-hidden=\"true\"><path d=\"M1 8h13M9.5 3.5 14 8l-4.5 4.5\"/></svg><span class=\"ds-label\">soy creador</span></a>",
+      "css": ".ds-cta-primary { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; height: 3.25rem; padding: 0 3rem; background: var(--color-accent, #FF3B4F); color: var(--color-print, #131316); border: none; font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; border-radius: 100px; box-shadow: none; transition: border-radius 320ms cubic-bezier(0.16,1,0.3,1), color 200ms linear; } .ds-cta-primary:hover, .ds-cta-primary:focus-visible { border-radius: 12px;  } .ds-cta-primary .ds-flood { position: absolute; z-index: -1; top: 50%; left: var(--x, 50%); width: 34rem; height: 34rem; translate: -50% -50%; scale: 0; border-radius: 50%; background: var(--color-accent-hover, #FF5566); transition: scale 220ms cubic-bezier(0.16,1,0.3,1); } .ds-cta-primary:hover .ds-flood, .ds-cta-primary:focus-visible .ds-flood { scale: 1; } .ds-cta-primary .ds-arrow { position: absolute; width: 16px; height: 16px; pointer-events: none; transition: translate 320ms cubic-bezier(0.34,1.56,0.64,1); } .ds-cta-primary .ds-arrow-out { right: 1.25rem; } .ds-cta-primary .ds-arrow-in { left: 1.25rem; translate: -4rem 0; } .ds-cta-primary:hover .ds-arrow-out, .ds-cta-primary:focus-visible .ds-arrow-out { translate: 4rem 0; } .ds-cta-primary:hover .ds-arrow-in, .ds-cta-primary:focus-visible .ds-arrow-in { translate: 0 0; } .ds-cta-primary .ds-label { position: relative; } .ds-cta-primary:focus-visible { outline: 2px solid var(--color-accent, #FF3B4F); outline-offset: 2px; } .ds-cta-primary:active { translate: 0 1px; }"
     },
     {
       "name": "Secondary CTA",
       "kind": "button",
       "refersTo": "cta-secondary",
-      "description": "Outlined paper stroke on the ink ground; inverts to a solid paper field on hover.",
-      "html": "<a class=\"ds-cta-secondary\" href=\"#\">soy una marca</a>",
-      "css": ".ds-cta-secondary { display: inline-flex; height: 3.25rem; align-items: center; justify-content: center; padding: 0 1.75rem; background: transparent; color: var(--color-paper, #F0EDE4); border: 2px solid var(--color-paper, #F0EDE4); border-radius: 0; box-shadow: none; font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; transition: background-color 0.2s, color 0.2s; } .ds-cta-secondary:hover { background: var(--color-paper, #F0EDE4); color: var(--color-print, #131316); } .ds-cta-secondary:focus-visible { outline: 2px solid var(--color-accent, #FF3B4F); outline-offset: 2px; } .ds-cta-secondary:active { transform: translateY(1px); }"
+      "description": "Outlined paper stroke on the ink ground. The paper field floods in on hover and the label turns to printed ink. The inversion sits on the element itself, never on a group-hover variant, which only reaches descendants.",
+      "html": "<a class=\"ds-cta-secondary\" href=\"#\"><span class=\"ds-flood\" aria-hidden=\"true\"></span><svg class=\"ds-arrow ds-arrow-out\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"square\" aria-hidden=\"true\"><path d=\"M1 8h13M9.5 3.5 14 8l-4.5 4.5\"/></svg><svg class=\"ds-arrow ds-arrow-in\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"square\" aria-hidden=\"true\"><path d=\"M1 8h13M9.5 3.5 14 8l-4.5 4.5\"/></svg><span class=\"ds-label\">soy una marca</span></a>",
+      "css": ".ds-cta-secondary { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; height: 3.25rem; padding: 0 3rem; background: transparent; color: var(--color-paper, #F0EDE4); border: 2px solid var(--color-paper, #F0EDE4); font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; border-radius: 100px; box-shadow: none; transition: border-radius 320ms cubic-bezier(0.16,1,0.3,1), color 200ms linear; } .ds-cta-secondary:hover, .ds-cta-secondary:focus-visible { border-radius: 12px; color: var(--color-print, #131316); } .ds-cta-secondary .ds-flood { position: absolute; z-index: -1; top: 50%; left: var(--x, 50%); width: 34rem; height: 34rem; translate: -50% -50%; scale: 0; border-radius: 50%; background: var(--color-paper, #F0EDE4); transition: scale 220ms cubic-bezier(0.16,1,0.3,1); } .ds-cta-secondary:hover .ds-flood, .ds-cta-secondary:focus-visible .ds-flood { scale: 1; } .ds-cta-secondary .ds-arrow { position: absolute; width: 16px; height: 16px; pointer-events: none; transition: translate 320ms cubic-bezier(0.34,1.56,0.64,1); } .ds-cta-secondary .ds-arrow-out { right: 1.25rem; } .ds-cta-secondary .ds-arrow-in { left: 1.25rem; translate: -4rem 0; } .ds-cta-secondary:hover .ds-arrow-out, .ds-cta-secondary:focus-visible .ds-arrow-out { translate: 4rem 0; } .ds-cta-secondary:hover .ds-arrow-in, .ds-cta-secondary:focus-visible .ds-arrow-in { translate: 0 0; } .ds-cta-secondary .ds-label { position: relative; } .ds-cta-secondary:focus-visible { outline: 2px solid var(--color-accent, #FF3B4F); outline-offset: 2px; } .ds-cta-secondary:active { translate: 0 1px; }"
     },
     {
       "name": "Header Link",
       "kind": "nav",
       "refersTo": "nav-link",
-      "description": "The only navigation on the surface: one outlined utility-face link stating exactly what happens.",
-      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-link\" href=\"#\">entrar</a></nav>",
-      "css": ".ds-nav { display: flex; align-items: center; justify-content: flex-end; } .ds-nav-link { display: inline-block; padding: 0.625rem 1rem; border: 2px solid var(--color-paper, #F0EDE4); border-radius: 0; background: transparent; color: var(--color-paper, #F0EDE4); font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; transition: background-color 0.2s, color 0.2s; } .ds-nav-link:hover { background: var(--color-paper, #F0EDE4); color: var(--color-print, #131316); } .ds-nav-link:focus-visible { outline: 2px solid var(--color-accent, #FF3B4F); outline-offset: 2px; }"
+      "description": "The only navigation on the surface: one outlined utility-face link stating exactly what happens. The same button as the CTAs at the header smaller vertical padding.",
+      "html": "<a class=\"ds-nav-link\" href=\"#\"><span class=\"ds-flood\" aria-hidden=\"true\"></span><svg class=\"ds-arrow ds-arrow-out\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"square\" aria-hidden=\"true\"><path d=\"M1 8h13M9.5 3.5 14 8l-4.5 4.5\"/></svg><svg class=\"ds-arrow ds-arrow-in\" viewBox=\"0 0 16 16\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"square\" aria-hidden=\"true\"><path d=\"M1 8h13M9.5 3.5 14 8l-4.5 4.5\"/></svg><span class=\"ds-label\">entrar</span></a>",
+      "css": ".ds-nav-link { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; padding: 0.625rem 3rem; background: transparent; color: var(--color-paper, #F0EDE4); border: 2px solid var(--color-paper, #F0EDE4); font-family: var(--font-martian), ui-monospace, monospace; font-stretch: 80%; font-size: 1.0625rem; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; border-radius: 100px; box-shadow: none; transition: border-radius 320ms cubic-bezier(0.16,1,0.3,1), color 200ms linear; } .ds-nav-link:hover, .ds-nav-link:focus-visible { border-radius: 12px; color: var(--color-print, #131316); } .ds-nav-link .ds-flood { position: absolute; z-index: -1; top: 50%; left: var(--x, 50%); width: 34rem; height: 34rem; translate: -50% -50%; scale: 0; border-radius: 50%; background: var(--color-paper, #F0EDE4); transition: scale 220ms cubic-bezier(0.16,1,0.3,1); } .ds-nav-link:hover .ds-flood, .ds-nav-link:focus-visible .ds-flood { scale: 1; } .ds-nav-link .ds-arrow { position: absolute; width: 16px; height: 16px; pointer-events: none; transition: translate 320ms cubic-bezier(0.34,1.56,0.64,1); } .ds-nav-link .ds-arrow-out { right: 1.25rem; } .ds-nav-link .ds-arrow-in { left: 1.25rem; translate: -4rem 0; } .ds-nav-link:hover .ds-arrow-out, .ds-nav-link:focus-visible .ds-arrow-out { translate: 4rem 0; } .ds-nav-link:hover .ds-arrow-in, .ds-nav-link:focus-visible .ds-arrow-in { translate: 0 0; } .ds-nav-link .ds-label { position: relative; } .ds-nav-link:focus-visible { outline: 2px solid var(--color-accent, #FF3B4F); outline-offset: 2px; } .ds-nav-link:active { translate: 0 1px; }"
     },
     {
       "name": "Paper Sheet",
@@ -373,7 +388,7 @@
       "Exactly three type sizes on the entire page, and no fourth.",
       "One grey, and it is for paper only.",
       "Coral appears only as a correction mark or as the final call.",
-      "Zero radius, zero shadows, zero raster assets.",
+      "Zero shadows and zero raster assets. Radius exists only on the buttons.",
       "Ragged sheet edges from a single shared SVG displacement filter.",
       "Three motions only: a scroll reveal, one CSS marquee, and an ink-only mesh ground fixed behind the whole page."
     ],
@@ -430,7 +445,7 @@
       },
       {
         "name": "The Cut, Not Lifted Rule",
-        "body": "A surface separates from the ground by material contrast and a torn edge. Never by a shadow, a glow, a border radius, or a translucent overlay.",
+        "body": "A surface separates from the ground by material contrast and a torn edge. Never by a shadow, a glow, or a translucent overlay. A radius is not a separation device either: the buttons carry one because a control is a manufactured object, not a torn one, and no container may borrow it to fake depth.",
         "section": "elevation"
       },
       {
@@ -474,7 +489,7 @@
       "Don't add a second grey or a grey ramp, and don't put --color-pencil on the ink ground; it fails AA there.",
       "Don't put --color-accent as text on paper (2.8:1) or white text on a coral field (3.3:1).",
       "Don't use coral as decoration — no coral divider, no coral left border on a callout, no coral section header. It marks a correction or it does not appear.",
-      "Don't add a border radius or a shadow anywhere on this surface, and don't fake depth with a translucent overlay or a glow.",
+      "Don't add a shadow anywhere on this surface, and don't fake depth with a translucent overlay or a glow.",
       "Don't put a track behind a score bar, and don't normalise bars against their own maxima.",
       "Don't draw a bar at the weight of a rule (1–2px); a measure is 5px and carries a tick.",
       "Don't centre a headline, a button row, or a section.",
@@ -485,7 +500,9 @@
       "Don't widen inkWash past the point where paper text on its brightest step drops below AA; #55555F measures 6.0:1 and is the current ceiling.",
       "Don't give a section an opaque background fill.",
       "Don't mirror inkWash into globals.css; it is JS-only by design and the custom properties would have no consumer.",
-      "Don't apply any rule in this file to /dashboard or the rest of the app — that surface belongs to the incumbent panel system, which is out of scope here."
+      "Don't apply any rule in this file to /dashboard or the rest of the app — that surface belongs to the incumbent panel system, which is out of scope here.",
+      "Don't put a border radius on anything that is not a button. The sheets, rows, stamps and the marquee band stay square; the radius belongs to the buttons and does not travel.",
+      "Don't transition `transform` on a Tailwind v4 element. It writes `scale` and `translate` as independent properties and leaves `transform` at `none`, so the animation silently never runs."
     ]
   }
 }

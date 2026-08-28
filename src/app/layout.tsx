@@ -52,8 +52,9 @@ THESIS: la nota se audita, no se presenta. Rechaza la rejilla de cuatro tarjetas
 de componentes que envia toda la categoria.
 OWN-WORLD: tinta #0B0B0C, papel bond #F0EDE4, un solo gris #63615C, coral
 #FF3B4F solo como marca de correccion. Big Shoulders en caja baja, Faustina de
-cuerpo, Martian Mono de etiqueta. Radio 0, sin sombras, bordes rasgados por
-filtro SVG, tres tamanos en toda la pagina.
+cuerpo, Martian Mono de etiqueta. Sin sombras, bordes rasgados por filtro SVG,
+tres tamanos en toda la pagina. Radio 0 en todo contenedor; los botones son la
+unica excepcion y la llevan solos.
 STORY: el visitante ve un numero enorme, lee de donde sale cada punto y cuanto
 falta, ve una campana tachada que no llego a existir, y entra por su lado.
 FIRST VIEWPORT: ficha de papel a la izquierda con 89,33 al mayor tamano de la

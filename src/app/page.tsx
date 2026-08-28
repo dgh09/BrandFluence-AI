@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Big_Shoulders, Faustina, Martian_Mono } from "next/font/google";
 
 import { auth } from "@/lib/auth";
 import { Logo } from "@/components/shared/Logo";
 import { ShaderGround } from "@/components/ui/ShaderGround";
+import { CtaFlujo } from "@/components/landing/CtaFlujo";
 import { Marquee } from "@/components/landing/Marquee";
 import { Paper } from "@/components/landing/Paper";
 import { Reveal } from "@/components/landing/Reveal";
@@ -18,7 +18,8 @@ import { formatScore } from "@/lib/numbers";
    THESIS: la nota se audita, no se presenta. Rechaza la rejilla de cuatro
    tarjetas de componentes que envía toda la categoría.
    OWN-WORLD: tinta, papel bond, un solo gris, coral solo como marca de
-   corrección. Radio 0, sin sombras, tres tamaños en toda la página.
+   corrección. Sin sombras, tres tamaños en toda la página. Radio 0 en los
+   contenedores; los botones son la única excepción.
    STORY: el visitante ve un número enorme, lee de dónde sale cada punto y
    cuánto falta, ve una campaña tachada que no llegó a existir, y entra.
    FIRST VIEWPORT: ficha a la izquierda con 89,33 al mayor tamaño de la página;
@@ -160,16 +161,11 @@ const DECISIONES = [
 ];
 
 /* --- Clases compartidas ---------------------------------------------------
-   Radio cero en toda la página. Tres tamaños y ni uno más: `text-score`,
-   `text-display` y `text-base`. Lo que parece «letra pequeña» es la misma
-   talla en versalitas. */
+   Tres tamaños y ni uno más: `text-score`, `text-display` y `text-base`. Lo
+   que parece «letra pequeña» es la misma talla en versalitas.
 
-const cta =
-  "inline-flex h-13 items-center justify-center px-7 text-base transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:translate-y-px";
-
-/** Tinta sobre el coral, no blanco: blanco sobre #FF3B4F se queda en 3,3:1. */
-const ctaPrimario = `${cta} utility bg-accent text-print hover:bg-accent-hover`;
-const ctaSecundario = `${cta} utility border-2 border-paper text-paper hover:bg-paper hover:text-print`;
+   Los botones viven en `CtaFlujo`: llevan radio, y el radio es suyo y de nadie
+   más en esta página. Las hojas siguen a canto vivo. */
 
 const h2 = "display text-display lowercase text-paper";
 
@@ -199,12 +195,12 @@ export default async function Home() {
               misma pantalla lo devalúa. */}
           <Logo size={32} />
 
-          <Link
+          <CtaFlujo
             href={session?.user ? "/dashboard" : "/login"}
-            className="utility shrink-0 border-2 border-paper px-4 py-2.5 text-base text-paper transition-colors hover:bg-paper hover:text-print focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            variante="nav"
           >
             {session?.user ? "ir al panel" : "entrar"}
-          </Link>
+          </CtaFlujo>
         </header>
 
         {/* --- Hero: el ojo entra por el número ---------------------------- */}
@@ -249,17 +245,23 @@ export default async function Home() {
 
             {!session?.user ? (
               <Reveal delay={0.24}>
-                {/* `items-start` para que en el teléfono los botones no se
-                    estiren a todo el ancho con el rótulo centrado: serían los
-                    primeros elementos centrados de la página, y por encima del
-                    número. */}
-                <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
-                  <Link href="/signup?tipo=creador" className={ctaPrimario}>
-                    soy creador
-                  </Link>
-                  <Link href="/signup?tipo=marca" className={ctaSecundario}>
+                {/* Rejilla y no flex, y `w-fit` en vez de `items-start`.
+                    Las dos cosas por el mismo motivo: los rótulos miden
+                    distinto —«soy una marca» sacaba 26px a «soy creador»— y
+                    apilados en el teléfono ese escalón se ve. Una rejilla
+                    ajustada al contenido dimensiona la columna por el más
+                    ancho y estira al otro hasta ahí, así que el par se lee
+                    como un bloque sin fijar ningún ancho a mano.
+
+                    `w-fit` sigue haciendo el trabajo que hacía `items-start`:
+                    en el teléfono los botones no se estiran a todo el ancho
+                    con el rótulo centrado, que los convertiría en los primeros
+                    elementos centrados de la página y por encima del número. */}
+                <div className="mt-8 grid w-fit grid-cols-1 gap-3 sm:auto-cols-fr sm:grid-flow-col">
+                  <CtaFlujo href="/signup?tipo=creador">soy creador</CtaFlujo>
+                  <CtaFlujo href="/signup?tipo=marca" variante="secundario">
                     soy una marca
-                  </Link>
+                  </CtaFlujo>
                 </div>
               </Reveal>
             ) : null}
@@ -433,13 +435,13 @@ export default async function Home() {
                 El matching se calcula en cuanto tengas nicho y audiencia. Sin
                 tarjeta, sin permanencia.
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link href="/signup?tipo=creador" className={ctaPrimario}>
-                  soy creador
-                </Link>
-                <Link href="/signup?tipo=marca" className={ctaSecundario}>
+              {/* La misma rejilla ajustada al contenido que en el hero: el
+                  par de botones se lee igual arriba y abajo. */}
+              <div className="mt-8 grid w-fit grid-cols-1 gap-3 sm:auto-cols-fr sm:grid-flow-col">
+                <CtaFlujo href="/signup?tipo=creador">soy creador</CtaFlujo>
+                <CtaFlujo href="/signup?tipo=marca" variante="secundario">
                   soy una marca
-                </Link>
+                </CtaFlujo>
               </div>
             </Reveal>
           </div>

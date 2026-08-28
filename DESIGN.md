@@ -41,6 +41,8 @@ typography:
     fontVariation: "width 80%"
 rounded:
   none: "0"
+  button: "100px"
+  button-hover: "12px"
 spacing:
   gutter: "1.25rem"
   row: "1.75rem"
@@ -52,7 +54,8 @@ components:
     backgroundColor: "{colors.accent}"
     textColor: "{colors.print}"
     typography: "{typography.label}"
-    rounded: "{rounded.none}"
+    rounded: "{rounded.button}"
+    roundedHover: "{rounded.button-hover}"
     padding: "0 1.75rem"
     height: "3.25rem"
   cta-primary-hover:
@@ -62,7 +65,8 @@ components:
     backgroundColor: "transparent"
     textColor: "{colors.paper}"
     typography: "{typography.label}"
-    rounded: "{rounded.none}"
+    rounded: "{rounded.button}"
+    roundedHover: "{rounded.button-hover}"
     padding: "0 1.75rem"
     height: "3.25rem"
   cta-secondary-hover:
@@ -72,7 +76,8 @@ components:
     backgroundColor: "transparent"
     textColor: "{colors.paper}"
     typography: "{typography.label}"
-    rounded: "{rounded.none}"
+    rounded: "{rounded.button}"
+    roundedHover: "{rounded.button-hover}"
     padding: "0.625rem 1rem"
   nav-link-hover:
     backgroundColor: "{colors.paper}"
@@ -133,10 +138,11 @@ auditing, not being pitched.
 The material logic is two-part and absolute. **Ink is the ground; paper is the
 only place content lives.** Every block of reading matter sits on a torn sheet of
 `#F0EDE4`; the ink ground carries only headings, the two calls to action, and the
-footer line. The paper is *cut out*, never *lifted*: there is no radius anywhere,
-no shadow anywhere, and the separation between sheet and ground comes entirely
-from the material contrast plus the ragged SVG-displaced edge. Sheets sit at
-small off-square rotations (−0.9°, −0.5°, −0.3°, +0.7°, +0.9°) because a sheet
+footer line. The paper is *cut out*, never *lifted*: no sheet carries a radius,
+nothing on the surface carries a shadow, and the separation between sheet and
+ground comes entirely from the material contrast plus the ragged SVG-displaced
+edge. The buttons are the one exception to the radius, and they own it alone.
+Sheets sit at small off-square rotations (−0.9°, −0.5°, −0.3°, +0.7°, +0.9°) because a sheet
 resting on a desk never lands straight.
 
 Density is generous and asymmetric. Nothing on the page is centred — not the
@@ -153,7 +159,7 @@ components as rows on a sheet instead.
 - Exactly three type sizes on the entire page, and no fourth.
 - One grey, and it is for paper only.
 - Coral appears only as a correction mark or as the final call.
-- Zero radius, zero shadows, zero raster assets.
+- Zero shadows and zero raster assets. Radius exists only on the buttons.
 - Ragged sheet edges from a single shared SVG displacement filter.
 - Three motions only: a scroll reveal, one CSS marquee, and an ink-only mesh ground fixed behind the whole page.
 
@@ -316,8 +322,8 @@ and the rules kept. Anything opaque and full-bleed erases the ground.
 
 ## Elevation & Depth
 
-**There are no shadows on this surface at all, and no radius.** Depth is
-material, not optical: a sheet reads as sitting on top of the ground because bond
+**There are no shadows on this surface at all, and no radius on any
+container.** Depth is material, not optical: a sheet reads as sitting on top of the ground because bond
 paper against near-black ink is a 13:1 material jump, because its edge is torn
 rather than machined, and because it is rotated a fraction of a degree off
 square. Nothing is ever lifted.
@@ -337,14 +343,25 @@ slow wash inside the ground itself, in ink only, and the sheets above it separat
 exactly the way they do everywhere else. See Components → Shader Ground.
 
 **The Cut, Not Lifted Rule.** A surface separates from the ground by material
-contrast and a torn edge. Never by a shadow, a glow, a border radius, or a
-translucent overlay.
+contrast and a torn edge. Never by a shadow, a glow, or a translucent overlay.
+A radius is not a separation device either: the buttons carry one because a
+control is a manufactured object, not a torn one, and no container may borrow
+it to fake depth.
 
 ## Shapes
 
-**Radius is 0 everywhere.** There is no radius scale on this surface; the
-frontmatter carries a single `none` step so that referencing it is explicit
-rather than accidental.
+**Radius is 0 on every container.** Sheets, rows, stamps and the marquee band
+are square, and the frontmatter's `none` step exists so that referencing zero is
+explicit rather than accidental.
+
+**The buttons are the exception, and the only one.** They carry
+`{rounded.button}` at rest and close to `{rounded.button-hover}` on hover and
+focus. This was Daniel's decision on 28/08/2026, taken against the rule this
+section used to state; it is recorded here rather than argued with. The reason
+it holds together: a control is a manufactured object and a sheet is a torn one,
+so the radius reads as the difference between the two rather than as a lapse. It
+does not travel — a container that borrows it is a regression, and so is a
+radius used to imply depth (see The Cut, Not Lifted Rule).
 
 The one irregular form is the **torn sheet**. A single SVG filter (`#rasgado`,
 declared once per document by `TornDefs` and consumed by every sheet through
@@ -368,17 +385,29 @@ stamp at −2°, the strikethrough at −1.4°.
 
 ### Buttons
 
-- **Shape:** square corners, zero radius. Fixed height `3.25rem`, horizontal
-  padding `1.75rem`, label set in the utility face (uppercase, body size).
+- **Shape:** a pill at rest (`{rounded.button}`) that closes to
+  `{rounded.button-hover}` on hover and focus, over 320ms. Fixed height
+  `3.25rem`, horizontal padding `3rem` to clear the arrows, label set in the
+  utility face (uppercase, body size).
 - **Primary:** coral field with **printed ink as the label**, never white — white
-  on `{colors.accent}` reaches only 3.3:1. Hover moves the fill to
-  `{colors.accent-hover}`.
+  on `{colors.accent}` reaches only 3.5:1. Hover floods the fill to
+  `{colors.accent-hover}`; the ink label stays put through both states.
 - **Secondary / Ghost:** a `2px` paper stroke with paper text and no fill. Hover
-  inverts to a solid paper field with printed-ink text. The header's "entrar"
-  link is the same treatment at a smaller padding.
+  floods a solid paper field in and turns the label to printed ink. The header's
+  "entrar" link is the same treatment at a smaller padding.
+- **The flood.** The hover fill does not swap, it arrives: a circle scaled from
+  `0` to full over 220ms, centred on the `--x` where the pointer entered, or on
+  the button's centre when the focus came from the keyboard. It is a `transform`,
+  never an animated `width`, and the button's `overflow: hidden` clips it to the
+  current radius.
+- **The arrow relay.** Two authored arrows — 2px stroke, square caps, mitred
+  joins, `currentColor` — cross the button in 320ms with a slight overshoot: the
+  resting arrow leaves past the right edge while its twin enters from the left
+  and lands where the first began. The label itself never moves.
 - **Focus:** a 2px coral outline at 2px offset (`focus-visible` only), on every
-  interactive element including the footer link. **Active:** a 1px downward
-  nudge. No other state exists.
+  interactive element including the footer link. Focus also runs the flood and
+  the relay, so the button answers a keyboard exactly as it answers a pointer.
+  **Active:** a 1px downward nudge. No other state exists.
 
 ### Cards / Containers (`Paper`)
 
@@ -550,8 +579,11 @@ the underlines, the bars, the ticks and the stamp are all CSS and inline SVG.
   coral field (3.3:1).
 - **Don't** use coral as decoration — no coral divider, no coral left border on a
   callout, no coral section header. It marks a correction or it does not appear.
-- **Don't** add a border radius or a shadow anywhere on this surface, and don't
-  fake depth with a translucent overlay or a glow.
+- **Don't** add a shadow anywhere on this surface, and don't fake depth with a
+  translucent overlay or a glow.
+- **Don't** put a border radius on anything that is not a button. The sheets,
+  rows, stamps and the marquee band stay square; the radius is the buttons' and
+  does not travel.
 - **Don't** put a track behind a score bar, and don't normalise bars against
   their own maxima.
 - **Don't** draw a bar at the weight of a rule (1–2px); a measure is 5px and
